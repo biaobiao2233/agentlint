@@ -422,8 +422,12 @@ def _remove_tree(directory: Path) -> None:
         return
     for path in directory.iterdir():
         is_reparse = bool(getattr(path.lstat(), "st_file_attributes", 0) & 0x400)
-        if path.is_symlink() or is_reparse:
-            # Remove the link entry only; never recurse into a junction target.
+        if path.is_symlink():
+            # unlink() removes the link entry even when its target is a directory.
+            # Path.is_dir() follows links, so rmdir() would fail on POSIX here.
+            path.unlink()
+        elif is_reparse:
+            # Remove a Windows junction/reparse entry only; never recurse into its target.
             if path.is_dir():
                 path.rmdir()
             else:
