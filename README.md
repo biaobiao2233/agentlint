@@ -39,15 +39,20 @@ The runtime has no OpenAI API dependency and does **not** consume OpenAI API cre
 ## Quickstart
 
 ```bash
-# scan the current repository; exit 1 only for errors
-agentlint scan .
+# start with the included safe fixture; it should PASS and exit 0
+agentlint scan examples/safe-project --fail-on error
 
-# generate portable evidence while keeping the process successful for a demo
-agentlint scan . --json reports/agentlint.json --html reports/agentlint.html --fail-on never
+# generate portable evidence from the deliberately unsafe fake fixture
+# (the report is expected to be BLOCK; --fail-on never keeps this demo command successful)
+agentlint scan examples/unsafe-project --json reports/unsafe.json --html reports/unsafe.html --fail-on never
 
 # discover the deterministic rule catalog
 agentlint rules
 ```
+
+To audit another repository, point the command at that repository's root. The
+AgentLint source checkout intentionally contains an unsafe fake fixture, so
+`agentlint scan .` is expected to BLOCK unless you exclude `examples`.
 
 `--json` is the machine-readable source of truth. `--html` creates a self-contained report that can be opened locally. Use `--exclude DIR` (repeatable) to skip directory names, `--no-color` for plain terminals, and `--quiet` to suppress console findings.
 

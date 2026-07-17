@@ -1,0 +1,1787 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>AgentLint — Build Week demo</title>
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Fraunces";
+        src: url("assets/fonts/fraunces-latin.woff2") format("woff2");
+        font-style: normal;
+        font-weight: 400 900;
+        font-display: block;
+      }
+
+      @font-face {
+        font-family: "IBM Plex Mono";
+        src: url("assets/fonts/ibm-plex-mono-400-latin.woff2") format("woff2");
+        font-style: normal;
+        font-weight: 400;
+        font-display: block;
+      }
+
+      @font-face {
+        font-family: "IBM Plex Mono";
+        src: url("assets/fonts/ibm-plex-mono-700-latin.woff2") format("woff2");
+        font-style: normal;
+        font-weight: 700;
+        font-display: block;
+      }
+
+      :root {
+        --paper: #EFE7D2;
+        --paper-soft: #F7F1DE;
+        --paper-deep: #E1D5B8;
+        --ink: #17150F;
+        --muted: #625B4E;
+        --faint: #8D8575;
+        --coral: #EF6C5B;
+        --coral-deep: #D95A49;
+        --mustard: #E7B848;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        margin: 0;
+        overflow: hidden;
+        background-color: var(--paper);
+        color: var(--ink);
+      }
+
+      body {
+        font-family: "IBM Plex Mono";
+      }
+
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        isolation: isolate;
+        background-color: var(--paper);
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background-color: var(--paper);
+        will-change: transform, opacity;
+      }
+
+      #scene1 {
+        z-index: 1;
+      }
+
+      #scene2,
+      #scene3,
+      #scene4,
+      #scene5,
+      #scene6 {
+        opacity: 0;
+      }
+
+      #scene2 {
+        z-index: 2;
+      }
+
+      #scene3 {
+        z-index: 3;
+      }
+
+      #scene4 {
+        z-index: 4;
+      }
+
+      #scene5 {
+        z-index: 5;
+      }
+
+      #scene6 {
+        z-index: 6;
+      }
+
+      .scene-content {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        padding: 86px 116px 196px;
+        gap: 24px;
+        box-sizing: border-box;
+      }
+
+      .paper-grid,
+      .registration,
+      .scene-wash,
+      .scene-ghost,
+      .rule-set {
+        position: absolute;
+        pointer-events: none;
+      }
+
+      .paper-grid {
+        inset: 0;
+        z-index: 0;
+        opacity: 0.72;
+        background-image: url("data:image/svg+xml,%3Csvg width='64' height='64' viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0H64M0 0V64' fill='none' stroke='%2317150F' stroke-opacity='.11' stroke-width='1'/%3E%3C/svg%3E");
+        background-size: 64px 64px;
+      }
+
+      .paper-grain {
+        position: absolute;
+        inset: 0;
+        z-index: 80;
+        pointer-events: none;
+        opacity: 0.13;
+        mix-blend-mode: multiply;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 280 280' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.74' numOctaves='4' seed='19' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.56'/%3E%3C/svg%3E");
+      }
+
+      .registration {
+        z-index: 2;
+        color: var(--muted);
+        font-size: 18px;
+        letter-spacing: 0.08em;
+        line-height: 1;
+      }
+
+      .registration::before,
+      .registration::after {
+        position: absolute;
+        display: block;
+        width: 18px;
+        height: 18px;
+        content: "";
+        border-color: var(--ink);
+        border-style: solid;
+        opacity: 0.78;
+      }
+
+      .registration.tl {
+        top: 34px;
+        left: 38px;
+      }
+
+      .registration.tl::before {
+        top: 0;
+        left: 0;
+        border-width: 2px 0 0 2px;
+      }
+
+      .registration.tr {
+        top: 34px;
+        right: 38px;
+        text-align: right;
+      }
+
+      .registration.tr::after {
+        top: 0;
+        right: 0;
+        border-width: 2px 2px 0 0;
+      }
+
+      .registration.bl {
+        bottom: 34px;
+        left: 38px;
+      }
+
+      .registration.bl::before {
+        bottom: 0;
+        left: 0;
+        border-width: 0 0 2px 2px;
+      }
+
+      .registration.br {
+        right: 38px;
+        bottom: 34px;
+        text-align: right;
+      }
+
+      .registration.br::after {
+        right: 0;
+        bottom: 0;
+        border-width: 0 2px 2px 0;
+      }
+
+      .scene-wash {
+        z-index: 1;
+        width: 360px;
+        height: 360px;
+        border-radius: 50%;
+        opacity: 0.42;
+        box-shadow: 0 0 160px 80px rgba(231, 184, 72, 0.22);
+      }
+
+      .scene-wash.coral-wash {
+        background-color: rgba(239, 108, 91, 0.24);
+        box-shadow: 0 0 160px 80px rgba(239, 108, 91, 0.15);
+      }
+
+      .scene-wash.mustard-wash {
+        background-color: rgba(231, 184, 72, 0.26);
+        box-shadow: 0 0 160px 80px rgba(231, 184, 72, 0.16);
+      }
+
+      .scene-ghost {
+        z-index: 1;
+        color: var(--paper-deep);
+        font-family: "Fraunces";
+        font-size: 226px;
+        font-weight: 700;
+        letter-spacing: -0.07em;
+        line-height: 0.78;
+        white-space: nowrap;
+      }
+
+      .rule-set {
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+      }
+
+      .rule {
+        position: absolute;
+        background-color: var(--ink);
+        opacity: 0.22;
+        transform-origin: left center;
+      }
+
+      .rule.h {
+        height: 2px;
+      }
+
+      .rule.v {
+        width: 2px;
+        transform-origin: center top;
+      }
+
+      .eyebrow,
+      .micro-label,
+      .stamp,
+      .method-label,
+      .terminal-line,
+      .card-id,
+      .caption-text,
+      .cmd-line,
+      .receipt-line {
+        font-family: "IBM Plex Mono";
+      }
+
+      .eyebrow {
+        position: relative;
+        z-index: 3;
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        gap: 13px;
+        color: var(--muted);
+        font-size: 21px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .eyebrow::before {
+        width: 48px;
+        height: 4px;
+        content: "";
+        background-color: var(--coral);
+      }
+
+      .display-title {
+        position: relative;
+        z-index: 3;
+        max-width: 1180px;
+        margin: 0;
+        color: var(--ink);
+        font-family: "Fraunces";
+        font-size: 102px;
+        font-weight: 700;
+        letter-spacing: -0.055em;
+        line-height: 0.93;
+      }
+
+      .display-title.compact {
+        font-size: 82px;
+      }
+
+      .supporting-copy {
+        position: relative;
+        z-index: 3;
+        max-width: 830px;
+        margin: 0;
+        color: var(--muted);
+        font-family: "Fraunces";
+        font-size: 35px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+      }
+
+      .stamp {
+        position: relative;
+        z-index: 4;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: fit-content;
+        min-height: 48px;
+        padding: 10px 15px;
+        border: 3px solid var(--coral);
+        color: var(--ink);
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        line-height: 1;
+        text-transform: uppercase;
+      }
+
+      .stamp.mustard {
+        border-color: var(--mustard);
+        color: var(--ink);
+      }
+
+      .stamp.ink {
+        border-color: var(--ink);
+        color: var(--ink);
+      }
+
+      .scene1-layout {
+        position: relative;
+        z-index: 3;
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(430px, 0.75fr);
+        min-height: 574px;
+        gap: 64px;
+      }
+
+      .s1-copy {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        gap: 28px;
+      }
+
+      .s1-title {
+        max-width: 960px;
+      }
+
+      .authority-diagram {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 16px;
+        padding: 58px 0 0 18px;
+      }
+
+      .authority-node {
+        position: relative;
+        display: grid;
+        grid-template-columns: 54px 1fr auto;
+        align-items: center;
+        min-height: 74px;
+        padding: 14px 18px;
+        border: 2px solid var(--ink);
+        background-color: var(--paper-soft);
+        box-shadow: 10px 10px 0 rgba(23, 21, 15, 0.08);
+      }
+
+      .authority-node .node-index {
+        color: var(--muted);
+        font-size: 20px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .authority-node .node-name {
+        color: var(--ink);
+        font-size: 28px;
+        font-weight: 700;
+      }
+
+      .authority-node .node-kind {
+        color: var(--muted);
+        font-size: 18px;
+        text-transform: uppercase;
+      }
+
+      .node-link {
+        width: 2px;
+        height: 28px;
+        margin-left: 44px;
+        background-color: var(--mustard);
+        transform-origin: center top;
+      }
+
+      .s1-risk-dot {
+        position: absolute;
+        top: -18px;
+        right: -18px;
+        width: 26px;
+        height: 26px;
+        border: 5px solid var(--paper-soft);
+        border-radius: 50%;
+        background-color: var(--coral);
+        box-shadow: 0 0 0 5px rgba(239, 108, 91, 0.24);
+      }
+
+      .s1-footer {
+        position: relative;
+        z-index: 3;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: end;
+        gap: 32px;
+        margin-top: auto;
+      }
+
+      .s1-footer-note {
+        max-width: 960px;
+        padding-top: 18px;
+        border-top: 3px solid var(--ink);
+        color: var(--muted);
+        font-size: 24px;
+        line-height: 1.35;
+      }
+
+      .scene2-layout {
+        position: relative;
+        z-index: 3;
+        display: grid;
+        grid-template-columns: minmax(0, 1.38fr) minmax(370px, 0.62fr);
+        gap: 46px;
+        min-height: 650px;
+      }
+
+      .terminal-sheet,
+      .read-as-data-sheet,
+      .review-sheet,
+      .safe-terminal,
+      .receipt-sheet {
+        border: 3px solid var(--ink);
+        background-color: var(--paper-soft);
+        box-shadow: 16px 16px 0 rgba(23, 21, 15, 0.1);
+      }
+
+      .terminal-sheet {
+        display: flex;
+        flex-direction: column;
+        min-height: 610px;
+        padding: 26px 32px 30px;
+        gap: 25px;
+      }
+
+      .terminal-topbar {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 20px;
+        padding-bottom: 19px;
+        border-bottom: 2px solid var(--paper-deep);
+      }
+
+      .terminal-dots {
+        display: flex;
+        gap: 9px;
+      }
+
+      .terminal-dots span {
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background-color: var(--paper-deep);
+      }
+
+      .terminal-dots span:first-child {
+        background-color: var(--coral);
+      }
+
+      .terminal-title {
+        color: var(--muted);
+        font-size: 20px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .terminal-state {
+        color: var(--coral-deep);
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .cmd-line {
+        padding: 18px 21px;
+        border-left: 8px solid var(--mustard);
+        background-color: var(--paper-deep);
+        color: var(--ink);
+        font-size: 29px;
+        font-weight: 700;
+        line-height: 1.3;
+      }
+
+      .terminal-results {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .terminal-line {
+        color: var(--muted);
+        font-size: 25px;
+        line-height: 1.22;
+      }
+
+      .terminal-line strong {
+        color: var(--ink);
+        font-weight: 700;
+      }
+
+      .terminal-line.coral {
+        color: var(--coral-deep);
+        font-weight: 700;
+      }
+
+      .verdict-strip {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        margin-top: auto;
+        padding: 23px 26px;
+        border: 3px solid var(--coral);
+        background-color: rgba(239, 108, 91, 0.14);
+        gap: 24px;
+      }
+
+      .verdict-word {
+        color: var(--coral-deep);
+        font-family: "Fraunces";
+        font-size: 72px;
+        font-weight: 700;
+        letter-spacing: -0.05em;
+        line-height: 0.9;
+      }
+
+      .verdict-note {
+        color: var(--muted);
+        font-size: 20px;
+        line-height: 1.25;
+      }
+
+      .finding-counts {
+        display: flex;
+        align-items: center;
+        gap: 21px;
+        color: var(--ink);
+        font-size: 23px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .finding-counts span {
+        display: block;
+        min-width: 82px;
+        padding-left: 14px;
+        border-left: 4px solid var(--coral);
+      }
+
+      .finding-counts span:last-child {
+        border-color: var(--mustard);
+      }
+
+      .read-as-data-sheet {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 610px;
+        padding: 32px;
+        background-color: var(--paper-deep);
+      }
+
+      .read-as-data-sheet h3,
+      .review-sheet h3 {
+        max-width: 360px;
+        margin: 0;
+        font-family: "Fraunces";
+        font-size: 57px;
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        line-height: 0.96;
+      }
+
+      .boundary-list,
+      .review-list,
+      .receipt-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .boundary-list li,
+      .review-list li,
+      .receipt-list li {
+        display: flex;
+        gap: 13px;
+        color: var(--muted);
+        font-size: 23px;
+        line-height: 1.25;
+      }
+
+      .boundary-list li::before,
+      .review-list li::before,
+      .receipt-list li::before {
+        flex: 0 0 auto;
+        width: 12px;
+        height: 12px;
+        margin-top: 9px;
+        content: "";
+        background-color: var(--mustard);
+      }
+
+      .boundary-list li:last-child::before {
+        background-color: var(--coral);
+      }
+
+      .scene3-layout {
+        position: relative;
+        z-index: 3;
+        display: grid;
+        grid-template-columns: minmax(420px, 0.52fr) minmax(800px, 1.48fr);
+        align-items: center;
+        min-height: 666px;
+        gap: 40px;
+      }
+
+      .annotation-column {
+        display: flex;
+        flex-direction: column;
+        gap: 27px;
+        padding-top: 40px;
+      }
+
+      .callout-card {
+        padding: 28px;
+        border-top: 5px solid var(--coral);
+        background-color: var(--paper-soft);
+        box-shadow: 10px 10px 0 rgba(23, 21, 15, 0.08);
+      }
+
+      .callout-card .micro-label {
+        display: block;
+        margin-bottom: 16px;
+        color: var(--coral-deep);
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .callout-card p {
+        margin: 0;
+        color: var(--ink);
+        font-family: "Fraunces";
+        font-size: 39px;
+        font-weight: 700;
+        letter-spacing: -0.035em;
+        line-height: 1.04;
+      }
+
+      .callout-arrow {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        color: var(--muted);
+        font-size: 19px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .callout-arrow::after {
+        width: 100%;
+        height: 3px;
+        content: "";
+        background-color: var(--coral);
+        transform-origin: left center;
+      }
+
+      .report-frame {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 630px;
+        padding: 23px;
+        border: 3px solid var(--ink);
+        background-color: var(--paper-deep);
+        box-shadow: 18px 18px 0 rgba(23, 21, 15, 0.11);
+        overflow: hidden;
+      }
+
+      .report-frame::before {
+        position: absolute;
+        top: 18px;
+        left: 18px;
+        z-index: 2;
+        padding: 8px 12px;
+        content: "PORTABLE REPORT — FAKE FIXTURE";
+        background-color: var(--ink);
+        color: var(--paper-soft);
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+      }
+
+      .report-frame img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        max-height: 622px;
+        object-fit: cover;
+        object-position: top center;
+        border: 2px solid var(--ink);
+        background-color: var(--paper-soft);
+        will-change: transform;
+      }
+
+      .scene4-layout {
+        position: relative;
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        min-height: 675px;
+        gap: 28px;
+      }
+
+      .evidence-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
+      }
+
+      .evidence-card {
+        display: flex;
+        flex-direction: column;
+        min-height: 365px;
+        padding: 27px 25px;
+        border: 3px solid var(--ink);
+        background-color: var(--paper-soft);
+        box-shadow: 10px 10px 0 rgba(23, 21, 15, 0.08);
+        gap: 18px;
+      }
+
+      .card-id {
+        width: fit-content;
+        padding: 7px 10px;
+        background-color: var(--coral);
+        color: var(--ink);
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+
+      .evidence-card h3 {
+        min-height: 76px;
+        margin: 0;
+        color: var(--ink);
+        font-family: "Fraunces";
+        font-size: 39px;
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        line-height: 0.95;
+      }
+
+      .evidence-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 22px;
+        line-height: 1.28;
+      }
+
+      .evidence-code {
+        margin-top: auto;
+        padding: 13px 14px;
+        border-left: 6px solid var(--coral);
+        background-color: var(--paper-deep);
+        color: var(--ink);
+        font-size: 20px;
+        line-height: 1.26;
+      }
+
+      .redaction-bar {
+        display: inline-block;
+        min-width: 172px;
+        height: 22px;
+        margin-left: 8px;
+        vertical-align: middle;
+        background-color: var(--ink);
+      }
+
+      .relation-ribbon {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto 1fr;
+        align-items: center;
+        min-height: 112px;
+        padding: 18px 25px;
+        border-top: 3px solid var(--mustard);
+        border-bottom: 3px solid var(--mustard);
+        gap: 20px;
+      }
+
+      .relation-node {
+        padding: 14px 18px;
+        border: 2px solid var(--ink);
+        background-color: var(--paper-deep);
+        color: var(--ink);
+        font-size: 24px;
+        font-weight: 700;
+        text-align: center;
+      }
+
+      .relation-arrow {
+        width: 86px;
+        height: 4px;
+        background-color: var(--mustard);
+        transform-origin: left center;
+      }
+
+      .relation-arrow::after {
+        float: right;
+        width: 0;
+        height: 0;
+        margin-top: -7px;
+        content: "";
+        border-top: 9px solid rgba(231, 184, 72, 0);
+        border-bottom: 9px solid rgba(231, 184, 72, 0);
+        border-left: 15px solid var(--mustard);
+      }
+
+      .scene5-layout {
+        position: relative;
+        z-index: 3;
+        display: grid;
+        grid-template-columns: minmax(0, 0.89fr) minmax(0, 1.11fr);
+        min-height: 653px;
+        gap: 42px;
+      }
+
+      .review-sheet,
+      .safe-terminal {
+        display: flex;
+        flex-direction: column;
+        min-height: 620px;
+        padding: 36px;
+        gap: 28px;
+      }
+
+      .review-sheet {
+        justify-content: space-between;
+      }
+
+      .review-sheet h3 {
+        max-width: 450px;
+        font-size: 67px;
+      }
+
+      .review-divider {
+        height: 3px;
+        background-color: var(--mustard);
+        transform-origin: left center;
+      }
+
+      .review-list li {
+        font-size: 27px;
+      }
+
+      .safe-terminal {
+        border-color: var(--ink);
+        background-color: var(--paper-soft);
+      }
+
+      .safe-terminal .cmd-line {
+        font-size: 26px;
+      }
+
+      .pass-field {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        padding: 26px 0;
+        border-top: 3px solid var(--ink);
+        border-bottom: 3px solid var(--ink);
+        gap: 30px;
+      }
+
+      .pass-word {
+        color: var(--ink);
+        font-family: "Fraunces";
+        font-size: 106px;
+        font-weight: 700;
+        letter-spacing: -0.065em;
+        line-height: 0.8;
+      }
+
+      .pass-seal {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 240px;
+        height: 154px;
+        border: 8px double var(--mustard);
+        border-radius: 50%;
+        color: var(--ink);
+        font-size: 19px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        line-height: 1.2;
+        text-align: center;
+      }
+
+      .pass-seal span {
+        display: block;
+      }
+
+      .pass-counts {
+        display: flex;
+        gap: 24px;
+        color: var(--muted);
+        font-size: 25px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .pass-footnote {
+        margin: 0;
+        color: var(--muted);
+        font-family: "Fraunces";
+        font-size: 32px;
+        font-weight: 500;
+        line-height: 1.16;
+      }
+
+      .scene6-layout {
+        position: relative;
+        z-index: 3;
+        display: grid;
+        grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+        min-height: 565px;
+        gap: 45px;
+      }
+
+      .receipt-sheet {
+        display: flex;
+        flex-direction: column;
+        min-height: 540px;
+        padding: 36px;
+        gap: 26px;
+      }
+
+      .receipt-sheet h3 {
+        max-width: 500px;
+        margin: 0;
+        color: var(--ink);
+        font-family: "Fraunces";
+        font-size: 72px;
+        font-weight: 700;
+        letter-spacing: -0.05em;
+        line-height: 0.9;
+      }
+
+      .receipt-subline {
+        color: var(--muted);
+        font-size: 21px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .receipt-list {
+        gap: 13px;
+      }
+
+      .receipt-list li {
+        color: var(--ink);
+        font-size: 24px;
+      }
+
+      .receipt-list li::before {
+        width: 20px;
+        height: 20px;
+        margin-top: 5px;
+        border: 3px solid var(--ink);
+        background-color: var(--paper-soft);
+      }
+
+      .cta-column {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 540px;
+        gap: 22px;
+      }
+
+      .human-boundaries {
+        padding: 28px;
+        border: 3px solid var(--ink);
+        background-color: var(--paper-deep);
+      }
+
+      .human-boundaries h3 {
+        margin: 0 0 17px;
+        color: var(--ink);
+        font-family: "Fraunces";
+        font-size: 48px;
+        font-weight: 700;
+        letter-spacing: -0.04em;
+      }
+
+      .human-boundaries p {
+        max-width: 690px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 24px;
+        line-height: 1.35;
+      }
+
+      .cta-sheet {
+        display: flex;
+        flex-direction: column;
+        padding: 30px;
+        border-top: 6px solid var(--coral);
+        border-bottom: 3px solid var(--ink);
+        background-color: var(--paper-soft);
+        gap: 17px;
+      }
+
+      .cta-brand {
+        color: var(--ink);
+        font-family: "Fraunces";
+        font-size: 83px;
+        font-weight: 700;
+        letter-spacing: -0.065em;
+        line-height: 0.8;
+      }
+
+      .method-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .method-label {
+        padding: 8px 10px;
+        border: 2px solid var(--ink);
+        color: var(--ink);
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .command-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+
+      .command-stack code {
+        padding: 8px 11px;
+        border-left: 5px solid var(--mustard);
+        background-color: var(--paper-deep);
+        color: var(--ink);
+        font-family: "IBM Plex Mono";
+        font-size: 18px;
+        line-height: 1.22;
+      }
+
+      #page-swipe {
+        position: absolute;
+        top: -18px;
+        bottom: -18px;
+        left: 0;
+        z-index: 91;
+        width: 162px;
+        border-left: 9px solid var(--coral);
+        background-color: var(--paper-deep);
+        opacity: 0;
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+
+      #caption-layer {
+        position: absolute;
+        right: 0;
+        bottom: 62px;
+        left: 0;
+        z-index: 95;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        min-height: 118px;
+        padding: 0 128px;
+        pointer-events: none;
+      }
+
+      .caption-group {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        display: flex;
+        justify-content: center;
+        padding: 0 128px;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .caption-text {
+        max-width: 1536px;
+        padding: 13px 21px 14px;
+        border-top: 4px solid var(--mustard);
+        background-color: rgba(247, 241, 222, 0.96);
+        box-shadow: 7px 7px 0 rgba(23, 21, 15, 0.16);
+        color: var(--ink);
+        font-size: 34px;
+        font-weight: 700;
+        letter-spacing: -0.015em;
+        line-height: 1.18;
+        text-align: center;
+      }
+
+      .caption-group.risk .caption-text {
+        border-top-color: var(--coral);
+      }
+
+      #end-fade {
+        position: absolute;
+        inset: 0;
+        z-index: 110;
+        background-color: var(--paper);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .scene1-layout,
+      .scene2-layout,
+      .scene3-layout,
+      .scene4-layout,
+      .scene5-layout,
+      .scene6-layout {
+        will-change: transform, opacity;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="agentlint-build-week"
+      data-start="0"
+      data-duration="172"
+      data-width="1920"
+      data-height="1080"
+    >
+      <audio
+        id="narration"
+        src="assets/narration-final-revised.wav"
+        data-start="0"
+        data-duration="167.961"
+        data-track-index="2"
+        data-volume="1"
+      ></audio>
+
+      <div id="scene1" class="scene">
+        <div class="paper-grid" data-layout-ignore></div>
+        <div class="scene-wash mustard-wash" id="s1-wash" style="right: 92px; top: 112px" data-layout-ignore></div>
+        <div class="scene-ghost" id="s1-ghost" style="right: -74px; bottom: 224px" aria-hidden="true" data-layout-ignore data-layout-allow-overflow>AUTHORITY</div>
+        <div class="rule-set" data-layout-ignore>
+          <span class="rule h" id="s1-rule-a" style="left: 116px; top: 154px; width: 580px"></span>
+          <span class="rule v" id="s1-rule-b" style="left: 1104px; top: 186px; height: 632px"></span>
+          <span class="rule h" id="s1-rule-c" style="left: 116px; bottom: 218px; width: 1384px"></span>
+        </div>
+        <div class="registration tl" data-layout-ignore>A-01</div>
+        <div class="registration tr" data-layout-ignore>LOCAL / PRE-FLIGHT</div>
+        <div class="registration bl" data-layout-ignore>1920 × 1080</div>
+        <div class="registration br" data-layout-ignore>BUILD WEEK / 2026</div>
+        <div class="scene-content">
+          <div class="eyebrow" id="s1-eyebrow">AgentLint / preflight agent infrastructure</div>
+          <div class="scene1-layout">
+            <div class="s1-copy">
+              <h1 class="display-title s1-title" id="s1-title">Your agent can inherit more authority than one file shows.</h1>
+              <p class="supporting-copy" id="s1-copy">Instructions, skills, plugins, and MCP configuration shape a policy together.</p>
+            </div>
+            <div class="authority-diagram" id="s1-diagram" aria-label="Instruction, skill, plugin, and MCP authority chain">
+              <div class="authority-node" id="s1-node-1">
+                <span class="node-index">01</span><span class="node-name">instruction</span><span class="node-kind">policy</span>
+              </div>
+              <div class="node-link" id="s1-link-1"></div>
+              <div class="authority-node" id="s1-node-2">
+                <span class="node-index">02</span><span class="node-name">skill</span><span class="node-kind">action</span>
+              </div>
+              <div class="node-link" id="s1-link-2"></div>
+              <div class="authority-node" id="s1-node-3">
+                <span class="node-index">03</span><span class="node-name">plugin</span><span class="node-kind">package</span>
+              </div>
+              <div class="node-link" id="s1-link-3"></div>
+              <div class="authority-node" id="s1-node-4">
+                <span class="node-index">04</span><span class="node-name">MCP config</span><span class="node-kind">boundary</span>
+                <span class="s1-risk-dot" id="s1-risk-dot"></span>
+              </div>
+            </div>
+          </div>
+          <div class="s1-footer">
+            <p class="s1-footer-note" id="s1-footer-note">Make the effective authority inspectable before the agent acts.</p>
+            <div class="stamp" id="s1-stamp">Read the relationships</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene2" class="scene">
+        <div class="paper-grid" data-layout-ignore></div>
+        <div class="scene-wash coral-wash" id="s2-wash" style="left: 194px; bottom: 78px" data-layout-ignore></div>
+        <div class="scene-ghost" id="s2-ghost" style="left: -54px; top: 210px" aria-hidden="true" data-layout-ignore data-layout-allow-overflow>ZERO EXECUTION</div>
+        <div class="rule-set" data-layout-ignore>
+          <span class="rule h" id="s2-rule-a" style="left: 116px; top: 156px; width: 1120px"></span>
+          <span class="rule v" id="s2-rule-b" style="right: 484px; top: 154px; height: 670px"></span>
+        </div>
+        <div class="registration tl" data-layout-ignore>B-02</div>
+        <div class="registration tr" data-layout-ignore>READ AS DATA</div>
+        <div class="registration bl" data-layout-ignore>PORTABLE INPUT</div>
+        <div class="registration br" data-layout-ignore>NO SERVER START</div>
+        <div class="scene-content">
+          <div class="eyebrow" id="s2-eyebrow">A local scan / no runtime side effects</div>
+          <h2 class="display-title compact" id="s2-title">Scan the files. Do not run them.</h2>
+          <div class="scene2-layout">
+            <section class="terminal-sheet" id="s2-terminal" aria-label="Terminal showing a fake unsafe fixture scan">
+              <div class="terminal-topbar" id="s2-topbar">
+                <div class="terminal-dots"><span></span><span></span><span></span></div>
+                <span class="terminal-title">agentlint / local shell</span>
+                <span class="terminal-state">READ ONLY</span>
+              </div>
+              <div class="cmd-line" id="s2-command">$ agentlint scan examples/unsafe-project --fail-on never</div>
+              <div class="terminal-results" id="s2-results">
+                <div class="terminal-line" id="s2-line-1">→ <strong>read</strong> instructions, skills, plugin manifests, MCP declarations</div>
+                <div class="terminal-line" id="s2-line-2">→ <strong>do not</strong> start MCP servers, import code, or run scripts</div>
+                <div class="terminal-line" id="s2-line-3">→ <strong>do not</strong> contact endpoints or change the scanned project</div>
+                <div class="terminal-line coral" id="s2-line-4">→ fixture baseline: deterministic findings for human review</div>
+              </div>
+              <div class="verdict-strip" id="s2-verdict">
+                <div class="verdict-word">BLOCK</div>
+                <div class="verdict-note">Declared evidence in a deliberately unsafe fixture. Nothing here was executed.</div>
+                <div class="finding-counts"><span>5 errors</span><span>6 warnings</span></div>
+              </div>
+            </section>
+            <aside class="read-as-data-sheet" id="s2-boundaries">
+              <div class="stamp" id="s2-fake-stamp">Fake unsafe fixture</div>
+              <h3 id="s2-boundary-title">Read as data — never run.</h3>
+              <ul class="boundary-list" id="s2-boundary-list">
+                <li>no MCP server launch</li>
+                <li>no code import</li>
+                <li>no script execution</li>
+                <li>no endpoint contact</li>
+                <li>no input-file modification</li>
+              </ul>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene3" class="scene">
+        <div class="paper-grid" data-layout-ignore></div>
+        <div class="scene-wash mustard-wash" id="s3-wash" style="right: 164px; bottom: 132px" data-layout-ignore></div>
+        <div class="scene-ghost" id="s3-ghost" style="left: -35px; top: 220px" aria-hidden="true" data-layout-ignore data-layout-allow-overflow>PRECEDENCE</div>
+        <div class="rule-set" data-layout-ignore>
+          <span class="rule h" id="s3-rule-a" style="left: 116px; top: 156px; width: 680px"></span>
+          <span class="rule h" id="s3-rule-b" style="right: 116px; bottom: 202px; width: 1086px"></span>
+        </div>
+        <div class="registration tl" data-layout-ignore>C-03</div>
+        <div class="registration tr" data-layout-ignore>EFFECTIVE POLICY</div>
+        <div class="registration bl" data-layout-ignore>ROOT → SERVICE</div>
+        <div class="registration br" data-layout-ignore>INSPECT / DO NOT TRUST ISOLATION</div>
+        <div class="scene-content">
+          <div class="eyebrow" id="s3-eyebrow">Actual portable report evidence</div>
+          <h2 class="display-title compact" id="s3-title">Effective Instruction Graph</h2>
+          <div class="scene3-layout">
+            <div class="annotation-column">
+              <div class="callout-card" id="s3-callout">
+                <span class="micro-label">inspect the chain</span>
+                <p>A nearer service instruction can weaken a root safety boundary.</p>
+              </div>
+              <div class="callout-arrow" id="s3-arrow">root safety boundary → nested service rule</div>
+              <div class="stamp" id="s3-stamp">Fake fixture only</div>
+            </div>
+            <figure class="report-frame" id="s3-report-frame">
+              <img id="s3-report-image" src="assets/agentlint-report-1440.png" alt="Portable AgentLint report screenshot generated from the fake unsafe fixture" />
+            </figure>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene4" class="scene">
+        <div class="paper-grid" data-layout-ignore></div>
+        <div class="scene-wash coral-wash" id="s4-wash" style="left: 48px; top: 318px" data-layout-ignore></div>
+        <div class="scene-ghost" id="s4-ghost" style="right: -126px; top: 250px" aria-hidden="true" data-layout-ignore data-layout-allow-overflow>EVIDENCE</div>
+        <div class="rule-set" data-layout-ignore>
+          <span class="rule h" id="s4-rule-a" style="left: 116px; top: 156px; width: 1200px"></span>
+          <span class="rule h" id="s4-rule-b" style="left: 116px; bottom: 213px; width: 920px"></span>
+        </div>
+        <div class="registration tl" data-layout-ignore>D-04</div>
+        <div class="registration tr" data-layout-ignore>DECLARED RELATIONSHIPS</div>
+        <div class="registration bl" data-layout-ignore>PLUGIN → SKILL → MCP</div>
+        <div class="registration br" data-layout-ignore>EVIDENCE, NOT EXECUTION</div>
+        <div class="scene-content">
+          <div class="eyebrow" id="s4-eyebrow">Capability-to-Authority Map</div>
+          <h2 class="display-title compact" id="s4-title">Declared capability. Concrete evidence.</h2>
+          <div class="scene4-layout">
+            <div class="stamp" id="s4-fake-stamp">Deliberately unsafe fake fixture</div>
+            <div class="evidence-grid" id="s4-evidence-grid">
+              <article class="evidence-card" id="s4-card-1">
+                <span class="card-id">MCP002</span>
+                <h3>Literal credential redacted</h3>
+                <p>Known literal patterns are redacted before report serialization.</p>
+                <div class="evidence-code">env.API_TOKEN = <span class="redaction-bar" id="s4-redaction"></span></div>
+              </article>
+              <article class="evidence-card" id="s4-card-2">
+                <span class="card-id">MCP001</span>
+                <h3>Remote MCP lacks secure transport</h3>
+                <p>The portable fixture declares a non-TLS endpoint as evidence for review.</p>
+                <div class="evidence-code">http://tools.example.test/mcp</div>
+              </article>
+              <article class="evidence-card" id="s4-card-3">
+                <span class="card-id">MCP005</span>
+                <h3>Approval boundary disabled</h3>
+                <p>The report flags a declared setting that removes an approval checkpoint.</p>
+                <div class="evidence-code">require_approval: never</div>
+              </article>
+            </div>
+            <div class="relation-ribbon" id="s4-ribbon" aria-label="Plugin to skill to MCP declaration relationship">
+              <span class="relation-node">plugin</span>
+              <span class="relation-arrow" id="s4-link-a"></span>
+              <span class="relation-node">skill</span>
+              <span class="relation-arrow" id="s4-link-b"></span>
+              <span class="relation-node">MCP declaration</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene5" class="scene">
+        <div class="paper-grid" data-layout-ignore></div>
+        <div class="scene-wash mustard-wash" id="s5-wash" style="right: 124px; top: 155px" data-layout-ignore></div>
+        <div class="scene-ghost" id="s5-ghost" style="left: -80px; bottom: 250px" aria-hidden="true" data-layout-ignore data-layout-allow-overflow>REVIEW</div>
+        <div class="rule-set" data-layout-ignore>
+          <span class="rule h" id="s5-rule-a" style="left: 116px; top: 156px; width: 1320px"></span>
+          <span class="rule v" id="s5-rule-b" style="left: 874px; top: 190px; height: 580px"></span>
+        </div>
+        <div class="registration tl" data-layout-ignore>E-05</div>
+        <div class="registration tr" data-layout-ignore>HUMAN DECISION</div>
+        <div class="registration bl" data-layout-ignore>NO AUTO-REMEDIATION</div>
+        <div class="registration br" data-layout-ignore>DETERMINISTIC RE-SCAN</div>
+        <div class="scene-content">
+          <div class="eyebrow" id="s5-eyebrow">Keep review explicit</div>
+          <h2 class="display-title compact" id="s5-title">Explain. Review. Then re-scan.</h2>
+          <div class="scene5-layout">
+            <section class="review-sheet" id="s5-review">
+              <div>
+                <div class="stamp mustard" id="s5-review-stamp">Review required</div>
+                <h3 id="s5-review-title">AgentLint does not repair a project.</h3>
+              </div>
+              <div class="review-divider" id="s5-divider"></div>
+              <ul class="review-list" id="s5-review-list">
+                <li>Human decides the policy.</li>
+                <li>Human reviews the diff.</li>
+                <li>AgentLint reports deterministic evidence.</li>
+              </ul>
+            </section>
+            <section class="safe-terminal" id="s5-safe-terminal">
+              <div class="terminal-topbar" id="s5-topbar">
+                <div class="terminal-dots"><span></span><span></span><span></span></div>
+                <span class="terminal-title">minimal safe fixture</span>
+                <span class="terminal-state" style="color: var(--ink)">RE-SCAN</span>
+              </div>
+              <div class="cmd-line" id="s5-command">$ agentlint scan examples/safe-project --fail-on error</div>
+              <div class="pass-field" id="s5-pass-field">
+                <div class="pass-word">PASS</div>
+                <div class="pass-seal" id="s5-pass-seal"><span>0 errors</span><span>0 warnings</span><span>0 info</span></div>
+              </div>
+              <div class="pass-counts" id="s5-pass-counts"><span>0 errors</span><span>0 warnings</span><span>0 info</span></div>
+              <p class="pass-footnote" id="s5-footnote">PASS means no deterministic rule matched. It is not a security certificate.</p>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene6" class="scene">
+        <div class="paper-grid" data-layout-ignore></div>
+        <div class="scene-wash coral-wash" id="s6-wash" style="left: 132px; top: 196px" data-layout-ignore></div>
+        <div class="scene-ghost" id="s6-ghost" style="right: -58px; bottom: 242px" aria-hidden="true" data-layout-ignore data-layout-allow-overflow>RECEIPT</div>
+        <div class="rule-set" data-layout-ignore>
+          <span class="rule h" id="s6-rule-a" style="left: 116px; top: 156px; width: 1050px"></span>
+          <span class="rule h" id="s6-rule-b" style="right: 116px; bottom: 206px; width: 1260px"></span>
+        </div>
+        <div class="registration tl" data-layout-ignore>F-06</div>
+        <div class="registration tr" data-layout-ignore>BUILD RECEIPT</div>
+        <div class="registration bl" data-layout-ignore>LOCAL / ZERO EXECUTION / REVIEWABLE</div>
+        <div class="registration br" data-layout-ignore>CTA / PORTABLE FIXTURE</div>
+        <div class="scene-content">
+          <div class="eyebrow" id="s6-eyebrow">OpenAI Build Week / factual receipt</div>
+          <h2 class="display-title compact" id="s6-title">Build faster. Keep the boundaries human.</h2>
+          <div class="scene6-layout">
+            <section class="receipt-sheet" id="s6-receipt">
+              <div class="stamp ink" id="s6-receipt-stamp">Codex + GPT-5.6</div>
+              <h3 id="s6-receipt-title">What the build accelerated</h3>
+              <div class="receipt-subline" id="s6-receipt-subline">OpenAI Build Week</div>
+              <ul class="receipt-list" id="s6-receipt-list">
+                <li>implementation</li>
+                <li>adversarial fake fixtures</li>
+                <li>plugin packaging</li>
+                <li>report verification</li>
+                <li>bilingual offline report UX</li>
+              </ul>
+            </section>
+            <div class="cta-column">
+              <section class="human-boundaries" id="s6-boundaries">
+                <h3>Human decisions stayed human.</h3>
+                <p>Local-only execution, redaction, approval boundaries, and no automatic remediation remain deliberate product choices.</p>
+              </section>
+              <section class="cta-sheet" id="s6-cta">
+                <div class="cta-brand">AgentLint</div>
+                <div class="method-row" id="s6-methods">
+                  <span class="method-label">Effective Instruction Graph</span>
+                  <span class="method-label">Plugin Contract Audit</span>
+                  <span class="method-label">Capability-to-Authority Map</span>
+                </div>
+                <div class="command-stack" id="s6-commands">
+                  <code>pip install -e ".[dev]"</code>
+                  <code>pytest</code>
+                  <code>agentlint scan examples/unsafe-project --fail-on never</code>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-swipe" data-layout-ignore></div>
+      <div id="caption-layer" aria-label="English burned-in captions"></div>
+      <div id="end-fade" data-layout-ignore></div>
+      <div id="grain" class="paper-grain" data-layout-ignore></div>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        window.__timelines = window.__timelines || {};
+
+        var CAPTIONS = [
+          { start: 0.16, end: 1.92, text: "Your agent can inherit" },
+          { start: 1.92, end: 3.58, text: "more authority than any" },
+          { start: 3.58, end: 4.78, text: "single configuration file shows." },
+          { start: 5.84, end: 7.04, text: "AgentLint is a local," },
+          { start: 7.58, end: 9.36, text: "zero-execution preflight" },
+          { start: 9.36, end: 10.42, text: "for instructions, skills, plugins," },
+          { start: 10.94, end: 11.54, text: "and MCP configuration that governs a coding agent." },
+          { start: 12.62, end: 14.46, text: "Here is a deliberately unsafe," , risk: true },
+          { start: 14.46, end: 16.68, text: "fake fixture.", risk: true },
+          { start: 17.78, end: 19.48, text: "AgentLint reads the files" },
+          { start: 19.48, end: 20.86, text: "as data." },
+          { start: 21.96, end: 24.06, text: "It does not start MCP servers," },
+          { start: 25.06, end: 27.30, text: "import code, run scripts," },
+          { start: 27.84, end: 30.06, text: "contact endpoints, or change" },
+          { start: 30.62, end: 32.54, text: "the scanned project." },
+          { start: 33.72, end: 35.16, text: "The result is", risk: true },
+          { start: 36.26, end: 37.34, text: "BLOCK: five errors", risk: true },
+          { start: 37.90, end: 39.68, text: "and six warnings.", risk: true },
+          { start: 40.80, end: 42.68, text: "The Effective Instruction Graph" },
+          { start: 42.68, end: 44.54, text: "makes instruction precedence visible." },
+          { start: 45.64, end: 47.66, text: "In this fixture, a nested" },
+          { start: 48.18, end: 49.92, text: "service instruction weakens" },
+          { start: 49.92, end: 51.56, text: "a root safety boundary.", risk: true },
+          { start: 52.62, end: 54.18, text: "Instead of trusting a file" },
+          { start: 54.28, end: 56.24, text: "in isolation, the reviewer can see" },
+          { start: 56.88, end: 59.18, text: "the chain that shaped the" },
+          { start: 60.22, end: 61.38, text: "effective policy." },
+          { start: 62.44, end: 66.92, text: "The Capability-to-Authority Map" },
+          { start: 68.04, end: 69.82, text: "links a plugin, its skill, and its MCP declaration." },
+          { start: 70.02, end: 72.08, text: "The findings show concrete evidence:" },
+          { start: 72.62, end: 74.02, text: "a literal credential is redacted", risk: true },
+          { start: 75.06, end: 77.00, text: "before serialization," },
+          { start: 77.54, end: 80.78, text: "a remote MCP endpoint lacks secure transport," , risk: true },
+          { start: 81.84, end: 84.62, text: "and a configuration disables an approval boundary.", risk: true },
+          { start: 85.62, end: 87.24, text: "These are declared facts;" },
+          { start: 88.24, end: 90.88, text: "the report does not pretend a server ran" },
+          { start: 90.88, end: 92.10, text: "or a permission was granted." },
+          { start: 93.18, end: 95.18, text: "AgentLint does not automatically" },
+          { start: 95.18, end: 96.20, text: "repair a project." },
+          { start: 97.16, end: 98.92, text: "A human reviews the policy" },
+          { start: 99.88, end: 100.52, text: "and the diff." },
+          { start: 101.46, end: 105.06, text: "After the deliberately unsafe configuration is replaced with a" },
+          { start: 106.06, end: 109.66, text: "minimal safe fixture, the same scan reports" },
+          { start: 110.16, end: 111.62, text: "PASS: zero errors and zero warnings." },
+          { start: 112.60, end: 116.90, text: "PASS means no deterministic rule matched;" },
+          { start: 117.42, end: 120.58, text: "it is not a security certificate." },
+          { start: 121.54, end: 127.12, text: "I built AgentLint during OpenAI Build Week with Codex and GPT five point six." },
+          { start: 128.12, end: 130.94, text: "Codex and GPT five point six" },
+          { start: 130.94, end: 133.03, text: "accelerated implementation iteration," },
+          { start: 133.52, end: 135.04, text: "adversarial fixtures," },
+          { start: 135.50, end: 136.54, text: "plugin packaging," },
+          { start: 137.54, end: 141.36, text: "report verification, and the bilingual offline report." },
+          { start: 142.38, end: 143.76, text: "Human decisions set the" },
+          { start: 144.76, end: 147.16, text: "local-only, zero-execution," },
+          { start: 147.64, end: 148.30, text: "redaction," },
+          { start: 148.78, end: 151.30, text: "and no-automatic-remediation boundaries." },
+          { start: 152.30, end: 152.94, text: "To try it," },
+          { start: 153.44, end: 154.66, text: "install the project," },
+          { start: 155.16, end: 156.10, text: "run the tests," },
+          { start: 156.54, end: 158.10, text: "and scan the included fake fixture." },
+          { start: 159.14, end: 159.86, text: "AgentLint" },
+          { start: 160.82, end: 164.60, text: "makes the agent infrastructure you are about to trust" },
+          { start: 165.62, end: 167.12, text: "visible before it runs." }
+        ];
+
+        var captionLayer = document.getElementById("caption-layer");
+        CAPTIONS.forEach(function (group, index) {
+          var groupEl = document.createElement("div");
+          var textEl = document.createElement("div");
+          groupEl.id = "cg-" + index;
+          groupEl.className = "caption-group" + (group.risk ? " risk" : "");
+          textEl.className = "caption-text";
+          textEl.textContent = group.text;
+          groupEl.appendChild(textEl);
+          captionLayer.appendChild(groupEl);
+
+          if (
+            window.__hyperframes &&
+            typeof window.__hyperframes.fitTextFontSize === "function"
+          ) {
+            var fit = window.__hyperframes.fitTextFontSize(group.text, {
+              fontFamily: "IBM Plex Mono",
+              fontWeight: 700,
+              maxWidth: 1450,
+              baseFontSize: 34,
+              minFontSize: 26,
+              step: 1
+            });
+            if (fit && fit.fontSize) {
+              textEl.style.fontSize = fit.fontSize + "px";
+            }
+          }
+        });
+
+        var tl = gsap.timeline({ paused: true });
+
+        function enter(selector, fromVars, toVars, start) {
+          tl.fromTo(
+            selector,
+            fromVars,
+            Object.assign(
+              {
+                duration: 0.55,
+                ease: "power3.out",
+                immediateRender: false
+              },
+              toVars
+            ),
+            start
+          );
+        }
+
+        function paperPush(oldScene, newScene, start, duration, borderColor, ease, zIndex) {
+          tl.set(newScene, { opacity: 1, x: 1920, zIndex: zIndex }, start);
+          tl.set("#page-swipe", { borderLeftColor: borderColor, opacity: 1, x: -178 }, start);
+          tl.to(oldScene, { x: -248, duration: duration, ease: ease }, start);
+          tl.to(newScene, { x: 0, duration: duration, ease: ease }, start);
+          tl.to("#page-swipe", { x: 2110, duration: duration, ease: ease }, start);
+          tl.set("#page-swipe", { opacity: 0, x: 0 }, start + duration);
+          tl.set(oldScene, { opacity: 0, x: 0, zIndex: 1 }, start + duration);
+        }
+
+        tl.to(
+          "#grain",
+          {
+            opacity: 0.09,
+            duration: 3.2,
+            ease: "sine.inOut",
+            yoyo: true,
+            repeat: 52
+          },
+          0
+        );
+
+        enter("#s1-wash", { opacity: 0, scale: 0.72 }, { opacity: 0.42, scale: 1, duration: 1.1, ease: "sine.out" }, 0.18);
+        enter("#s1-ghost", { opacity: 0, x: 90 }, { opacity: 1, x: 0, duration: 0.84, ease: "expo.out" }, 0.23);
+        enter("#s1-rule-a", { scaleX: 0 }, { scaleX: 1, duration: 0.42, ease: "power2.out" }, 0.28);
+        enter("#s1-rule-b", { scaleY: 0 }, { scaleY: 1, duration: 0.68, ease: "sine.out" }, 0.36);
+        enter("#s1-rule-c", { scaleX: 0 }, { scaleX: 1, duration: 0.34, ease: "power4.out" }, 0.44);
+        enter("#s1-eyebrow", { opacity: 0, x: -42 }, { opacity: 1, x: 0, duration: 0.38, ease: "power4.out" }, 0.32);
+        enter("#s1-title", { opacity: 0, y: 84, letterSpacing: "-0.01em" }, { opacity: 1, y: 0, letterSpacing: "-0.055em", duration: 0.82, ease: "expo.out" }, 0.52);
+        enter("#s1-copy", { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.54, ease: "sine.out" }, 0.96);
+        enter("#s1-node-1", { opacity: 0, x: 96 }, { opacity: 1, x: 0, duration: 0.36, ease: "power3.out" }, 0.64);
+        enter("#s1-link-1", { scaleY: 0 }, { scaleY: 1, duration: 0.24, ease: "power2.out" }, 0.91);
+        enter("#s1-node-2", { opacity: 0, x: 76 }, { opacity: 1, x: 0, duration: 0.28, ease: "back.out(1.4)" }, 1.03);
+        enter("#s1-link-2", { scaleY: 0 }, { scaleY: 1, duration: 0.21, ease: "power2.out" }, 1.22);
+        enter("#s1-node-3", { opacity: 0, x: 58 }, { opacity: 1, x: 0, duration: 0.32, ease: "circ.out" }, 1.33);
+        enter("#s1-link-3", { scaleY: 0 }, { scaleY: 1, duration: 0.2, ease: "power2.out" }, 1.54);
+        enter("#s1-node-4", { opacity: 0, x: 44 }, { opacity: 1, x: 0, duration: 0.26, ease: "elastic.out(1, 0.5)" }, 1.62);
+        enter("#s1-risk-dot", { opacity: 0, scale: 0.1 }, { opacity: 1, scale: 1, duration: 0.28, ease: "back.out(2.4)" }, 1.82);
+        enter("#s1-footer-note", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.42, ease: "power1.out" }, 1.3);
+        enter("#s1-stamp", { opacity: 0, rotation: -6, scale: 1.16 }, { opacity: 1, rotation: 0, scale: 1, duration: 0.25, ease: "back.out(1.8)" }, 1.66);
+        tl.to("#s1-wash", { x: 34, y: -18, duration: 8.4, ease: "sine.inOut", yoyo: true, repeat: 1 }, 2.1);
+        tl.to("#s1-risk-dot", { scale: 1.18, duration: 0.8, ease: "sine.inOut", yoyo: true, repeat: 3 }, 2.55);
+
+        paperPush("#scene1", "#scene2", 17.5, 0.5, "#EF6C5B", "power3.inOut", 20);
+
+        enter("#s2-wash", { opacity: 0, scale: 0.68 }, { opacity: 0.42, scale: 1, duration: 0.8, ease: "sine.out" }, 18.08);
+        enter("#s2-ghost", { opacity: 0, x: -86 }, { opacity: 1, x: 0, duration: 0.68, ease: "expo.out" }, 18.14);
+        enter("#s2-rule-a", { scaleX: 0 }, { scaleX: 1, duration: 0.42, ease: "power3.out" }, 18.18);
+        enter("#s2-rule-b", { scaleY: 0 }, { scaleY: 1, duration: 0.62, ease: "sine.out" }, 18.29);
+        enter("#s2-eyebrow", { opacity: 0, y: -22 }, { opacity: 1, y: 0, duration: 0.3, ease: "power4.out" }, 18.16);
+        enter("#s2-title", { opacity: 0, x: -72 }, { opacity: 1, x: 0, duration: 0.64, ease: "expo.out" }, 18.35);
+        enter("#s2-terminal", { opacity: 0, y: 72, rotation: -1.5 }, { opacity: 1, y: 0, rotation: 0, duration: 0.58, ease: "power3.out" }, 18.62);
+        enter("#s2-topbar", { opacity: 0, y: -18 }, { opacity: 1, y: 0, duration: 0.26, ease: "circ.out" }, 18.88);
+        enter("#s2-command", { opacity: 0, x: -38 }, { opacity: 1, x: 0, duration: 0.46, ease: "steps(8)" }, 19.14);
+        enter("#s2-line-1", { opacity: 0, x: -26 }, { opacity: 1, x: 0, duration: 0.28, ease: "power2.out" }, 20.08);
+        enter("#s2-line-2", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.34, ease: "sine.out" }, 20.44);
+        enter("#s2-line-3", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.24, ease: "circ.out" }, 20.82);
+        enter("#s2-line-4", { opacity: 0, x: -18 }, { opacity: 1, x: 0, duration: 0.36, ease: "power4.out" }, 21.12);
+        enter("#s2-verdict", { opacity: 0, scale: 0.86 }, { opacity: 1, scale: 1, duration: 0.42, ease: "back.out(1.8)" }, 21.62);
+        enter("#s2-boundaries", { opacity: 0, x: 92, rotation: 1.2 }, { opacity: 1, x: 0, rotation: 0, duration: 0.56, ease: "power3.out" }, 18.8);
+        enter("#s2-fake-stamp", { opacity: 0, rotation: 8, scale: 1.16 }, { opacity: 1, rotation: 0, scale: 1, duration: 0.25, ease: "back.out(1.6)" }, 19.42);
+        enter("#s2-boundary-title", { opacity: 0, y: 54 }, { opacity: 1, y: 0, duration: 0.58, ease: "expo.out" }, 19.7);
+        enter("#s2-boundary-list li", { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.31, ease: "power2.out", stagger: 0.11 }, 20.46);
+        tl.to("#s2-wash", { x: -40, y: 26, duration: 10.2, ease: "sine.inOut", yoyo: true, repeat: 1 }, 22.4);
+
+        paperPush("#scene2", "#scene3", 44.5, 0.5, "#E7B848", "power3.inOut", 30);
+
+        enter("#s3-wash", { opacity: 0, scale: 0.72 }, { opacity: 0.42, scale: 1, duration: 0.94, ease: "sine.out" }, 45.12);
+        enter("#s3-ghost", { opacity: 0, x: -104 }, { opacity: 1, x: 0, duration: 0.74, ease: "expo.out" }, 45.14);
+        enter("#s3-rule-a", { scaleX: 0 }, { scaleX: 1, duration: 0.46, ease: "power3.out" }, 45.16);
+        enter("#s3-rule-b", { scaleX: 0 }, { scaleX: 1, duration: 0.36, ease: "power4.out" }, 45.34);
+        enter("#s3-eyebrow", { opacity: 0, x: -34 }, { opacity: 1, x: 0, duration: 0.32, ease: "power4.out" }, 45.18);
+        enter("#s3-title", { opacity: 0, y: 72 }, { opacity: 1, y: 0, duration: 0.66, ease: "expo.out" }, 45.38);
+        enter("#s3-report-frame", { opacity: 0, y: 98, rotation: 1.1 }, { opacity: 1, y: 0, rotation: 0, duration: 0.7, ease: "power3.out" }, 45.68);
+        enter("#s3-callout", { opacity: 0, x: -72 }, { opacity: 1, x: 0, duration: 0.52, ease: "power3.out" }, 46.04);
+        enter("#s3-arrow", { opacity: 0, x: -28 }, { opacity: 1, x: 0, duration: 0.35, ease: "circ.out" }, 46.45);
+        enter("#s3-stamp", { opacity: 0, rotation: -8, scale: 1.16 }, { opacity: 1, rotation: 0, scale: 1, duration: 0.24, ease: "back.out(1.7)" }, 46.76);
+        tl.to("#s3-report-image", { scale: 1.035, duration: 18.5, ease: "none" }, 46.1);
+        tl.to("#s3-wash", { x: -38, y: -22, duration: 8.1, ease: "sine.inOut", yoyo: true, repeat: 1 }, 47.1);
+
+        paperPush("#scene3", "#scene4", 67.5, 0.5, "#EF6C5B", "power3.inOut", 40);
+
+        enter("#s4-wash", { opacity: 0, scale: 0.66 }, { opacity: 0.42, scale: 1, duration: 0.76, ease: "sine.out" }, 68.08);
+        enter("#s4-ghost", { opacity: 0, x: 90 }, { opacity: 1, x: 0, duration: 0.72, ease: "expo.out" }, 68.14);
+        enter("#s4-rule-a", { scaleX: 0 }, { scaleX: 1, duration: 0.42, ease: "power3.out" }, 68.16);
+        enter("#s4-rule-b", { scaleX: 0 }, { scaleX: 1, duration: 0.31, ease: "power4.out" }, 68.35);
+        enter("#s4-eyebrow", { opacity: 0, y: -22 }, { opacity: 1, y: 0, duration: 0.32, ease: "power4.out" }, 68.16);
+        enter("#s4-title", { opacity: 0, x: -74 }, { opacity: 1, x: 0, duration: 0.64, ease: "expo.out" }, 68.36);
+        enter("#s4-fake-stamp", { opacity: 0, rotation: -9, scale: 1.15 }, { opacity: 1, rotation: 0, scale: 1, duration: 0.26, ease: "back.out(1.9)" }, 68.78);
+        enter("#s4-card-1", { opacity: 0, x: -110, rotation: -1.6 }, { opacity: 1, x: 0, rotation: 0, duration: 0.44, ease: "power3.out" }, 69.04);
+        enter("#s4-card-2", { opacity: 0, y: 84, rotation: 0.8 }, { opacity: 1, y: 0, rotation: 0, duration: 0.54, ease: "circ.out" }, 69.28);
+        enter("#s4-card-3", { opacity: 0, x: 110, rotation: 1.6 }, { opacity: 1, x: 0, rotation: 0, duration: 0.4, ease: "back.out(1.2)" }, 69.54);
+        enter("#s4-ribbon", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.46, ease: "power2.out" }, 70.06);
+        enter("#s4-link-a", { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: "power3.out" }, 70.42);
+        enter("#s4-link-b", { scaleX: 0 }, { scaleX: 1, duration: 0.34, ease: "power4.out" }, 70.68);
+        enter("#s4-redaction", { scaleX: 0 }, { scaleX: 1, duration: 0.34, ease: "power3.out" }, 71.1);
+        tl.to("#s4-wash", { x: 44, y: -22, duration: 12.3, ease: "sine.inOut", yoyo: true, repeat: 1 }, 71.6);
+
+        paperPush("#scene4", "#scene5", 95.4, 0.6, "#E7B848", "sine.inOut", 50);
+
+        enter("#s5-wash", { opacity: 0, scale: 0.7 }, { opacity: 0.42, scale: 1, duration: 0.88, ease: "sine.out" }, 96.12);
+        enter("#s5-ghost", { opacity: 0, x: -96 }, { opacity: 1, x: 0, duration: 0.76, ease: "expo.out" }, 96.14);
+        enter("#s5-rule-a", { scaleX: 0 }, { scaleX: 1, duration: 0.4, ease: "power3.out" }, 96.18);
+        enter("#s5-rule-b", { scaleY: 0 }, { scaleY: 1, duration: 0.58, ease: "sine.out" }, 96.28);
+        enter("#s5-eyebrow", { opacity: 0, x: -38 }, { opacity: 1, x: 0, duration: 0.32, ease: "power4.out" }, 96.18);
+        enter("#s5-title", { opacity: 0, y: 70 }, { opacity: 1, y: 0, duration: 0.66, ease: "expo.out" }, 96.38);
+        enter("#s5-review", { opacity: 0, x: -92, rotation: -1.2 }, { opacity: 1, x: 0, rotation: 0, duration: 0.58, ease: "power3.out" }, 96.72);
+        enter("#s5-review-stamp", { opacity: 0, rotation: -9, scale: 1.15 }, { opacity: 1, rotation: 0, scale: 1, duration: 0.26, ease: "back.out(1.8)" }, 97.1);
+        enter("#s5-review-title", { opacity: 0, y: 46 }, { opacity: 1, y: 0, duration: 0.56, ease: "expo.out" }, 97.36);
+        enter("#s5-divider", { scaleX: 0 }, { scaleX: 1, duration: 0.36, ease: "power3.out" }, 97.84);
+        enter("#s5-review-list li", { opacity: 0, x: -28 }, { opacity: 1, x: 0, duration: 0.34, ease: "power2.out", stagger: 0.13 }, 98.1);
+        enter("#s5-safe-terminal", { opacity: 0, x: 106, rotation: 1.1 }, { opacity: 1, x: 0, rotation: 0, duration: 0.58, ease: "power3.out" }, 96.86);
+        enter("#s5-topbar", { opacity: 0, y: -18 }, { opacity: 1, y: 0, duration: 0.28, ease: "circ.out" }, 97.26);
+        enter("#s5-command", { opacity: 0, x: 38 }, { opacity: 1, x: 0, duration: 0.46, ease: "steps(8)" }, 97.62);
+        enter("#s5-pass-field", { opacity: 0, scale: 0.88 }, { opacity: 1, scale: 1, duration: 0.44, ease: "back.out(1.6)" }, 98.32);
+        enter("#s5-pass-seal", { opacity: 0, rotation: 18, scale: 0.62 }, { opacity: 1, rotation: 0, scale: 1, duration: 0.38, ease: "back.out(1.8)" }, 98.7);
+        enter("#s5-pass-counts", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, 99.04);
+        enter("#s5-footnote", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.38, ease: "sine.out" }, 99.36);
+        tl.to("#s5-wash", { x: -44, y: 26, duration: 10.4, ease: "sine.inOut", yoyo: true, repeat: 1 }, 100.1);
+
+        paperPush("#scene5", "#scene6", 121.4, 0.6, "#EF6C5B", "power2.inOut", 60);
+
+        enter("#s6-wash", { opacity: 0, scale: 0.7 }, { opacity: 0.42, scale: 1, duration: 0.92, ease: "sine.out" }, 122.12);
+        enter("#s6-ghost", { opacity: 0, x: 96 }, { opacity: 1, x: 0, duration: 0.76, ease: "expo.out" }, 122.14);
+        enter("#s6-rule-a", { scaleX: 0 }, { scaleX: 1, duration: 0.42, ease: "power3.out" }, 122.18);
+        enter("#s6-rule-b", { scaleX: 0 }, { scaleX: 1, duration: 0.36, ease: "power4.out" }, 122.36);
+        enter("#s6-eyebrow", { opacity: 0, x: -36 }, { opacity: 1, x: 0, duration: 0.32, ease: "power4.out" }, 122.18);
+        enter("#s6-title", { opacity: 0, y: 70 }, { opacity: 1, y: 0, duration: 0.68, ease: "expo.out" }, 122.38);
+        enter("#s6-receipt", { opacity: 0, y: 90, rotation: -1.1 }, { opacity: 1, y: 0, rotation: 0, duration: 0.64, ease: "power3.out" }, 122.76);
+        enter("#s6-receipt-stamp", { opacity: 0, rotation: -8, scale: 1.14 }, { opacity: 1, rotation: 0, scale: 1, duration: 0.27, ease: "back.out(1.8)" }, 123.16);
+        enter("#s6-receipt-title", { opacity: 0, y: 44 }, { opacity: 1, y: 0, duration: 0.56, ease: "expo.out" }, 123.42);
+        enter("#s6-receipt-subline", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.3, ease: "circ.out" }, 123.85);
+        enter("#s6-receipt-list li", { opacity: 0, x: -28 }, { opacity: 1, x: 0, duration: 0.32, ease: "power2.out", stagger: 0.14 }, 124.18);
+        enter("#s6-boundaries", { opacity: 0, x: 92 }, { opacity: 1, x: 0, duration: 0.54, ease: "power3.out" }, 122.92);
+        enter("#s6-cta", { opacity: 0, y: 88 }, { opacity: 1, y: 0, duration: 0.62, ease: "power3.out" }, 123.38);
+        enter("#s6-methods", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.4, ease: "sine.out" }, 124.0);
+        enter("#s6-commands", { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.46, ease: "circ.out" }, 124.42);
+        tl.to("#s6-wash", { x: 38, y: -24, duration: 21.5, ease: "sine.inOut", yoyo: true, repeat: 1 }, 125.4);
+
+        CAPTIONS.forEach(function (group, index) {
+          var el = document.getElementById("cg-" + index);
+          var exitStart = Math.max(group.start + 0.28, group.end - 0.14);
+          tl.set(el, { autoAlpha: 0, scale: 1 }, 0);
+          tl.fromTo(
+            el,
+            { autoAlpha: 0, y: 22, scale: 0.98 },
+            {
+              autoAlpha: 1,
+              y: 0,
+              scale: 1,
+              duration: 0.22,
+              ease: "power3.out",
+              immediateRender: false
+            },
+            group.start
+          );
+          tl.to(
+            el,
+            {
+              autoAlpha: 0,
+              y: -10,
+              scale: 0.98,
+              duration: 0.12,
+              ease: "power2.in"
+            },
+            exitStart
+          );
+          tl.set(el, { autoAlpha: 0 }, group.end);
+        });
+
+        tl.to("#end-fade", { opacity: 1, duration: 0.8, ease: "sine.inOut" }, 171.0);
+
+        CAPTIONS.forEach(function (group, index) {
+          var captionEl = document.getElementById("cg-" + index);
+          if (!captionEl) return;
+          tl.seek(group.end + 0.01);
+          var computed = window.getComputedStyle(captionEl);
+          if (computed.opacity !== "0" && computed.visibility !== "hidden") {
+            console.warn("[caption-lint] group " + index + " still visible at t=" + (group.end + 0.01).toFixed(2) + "s");
+          }
+        });
+        tl.seek(0);
+
+        window.__timelines["agentlint-build-week"] = tl;
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,33 @@
+Your agent can inherit more authority than any single configuration file shows.
+AgentLint is a local, zero-execution preflight for the instructions, skills,
+plugins, and MCP configuration that govern a coding agent.
+
+Here is a deliberately unsafe, fake fixture. AgentLint reads the files as data.
+It does not start MCP servers, import code, run scripts, contact endpoints, or
+change the scanned project. The result is BLOCK: five errors and six warnings.
+
+The Effective Instruction Graph makes instruction precedence visible. In this
+fixture, a nested service instruction weakens a root safety boundary. Instead
+of trusting a file in isolation, the reviewer can see the chain that shaped the
+effective policy.
+
+The Capability-to-Authority Map links a plugin, its skill, and its MCP
+declaration. The findings show concrete evidence: a literal credential is
+redacted before serialization, a remote MCP endpoint lacks secure transport,
+and a configuration disables an approval boundary. These are declared facts;
+the report does not pretend a server ran or a permission was granted.
+
+AgentLint does not automatically repair a project. A human reviews the policy
+and the diff. After the deliberately unsafe configuration is replaced with a
+minimal safe fixture, the same scan reports PASS: zero errors and zero
+warnings. PASS means no deterministic rule matched; it is not a security
+certificate.
+
+I built AgentLint during OpenAI Build Week with Codex and GPT five point six.
+Codex and GPT five point six accelerated implementation iteration, adversarial fixtures, plugin packaging,
+report verification, and the bilingual offline report. Human decisions set the
+local-only, zero-execution, redaction, and no-automatic-remediation boundaries.
+
+To try it, install the project, run the tests, and scan the included fake
+fixture. AgentLint makes the agent infrastructure you are about to trust
+visible before it runs.
