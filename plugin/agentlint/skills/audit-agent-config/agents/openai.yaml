@@ -1,0 +1,5 @@
+interface:
+  display_name: "Audit Agent Config"
+  short_description: "Audit Codex instructions, skills, plugins, and MCP"
+  brand_color: "#F97316"
+  default_prompt: "Use $audit-agent-config to audit this repository and explain the effective agent policy."
