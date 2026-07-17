@@ -22,3 +22,6 @@ video/node_modules/
 video/.hyperframes/
 video/assets/*.wav
 video/assets/*.mp4
+
+# Local visual-regression captures for the Pages landing page.
+output/playwright/public-demo-*.png

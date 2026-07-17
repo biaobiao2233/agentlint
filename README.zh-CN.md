@@ -4,6 +4,25 @@
 
 **一句话：AgentLint 是给 Codex 代理配置做的本地、零执行预检工具，用来在安装、分享或信任配置前看清“实际生效的指令”和声明的权限关系。**
 
+[打开公开评审演示页](https://biaobiao2233.github.io/agentlint/)
+
+[查看假夹具源码](examples/unsafe-project) · [机器可读快照](artifacts/unsafe-report.json)
+
+## 公开演示：生成的证据页，不是在线扫描器
+
+公开演示页部署在 GitHub Pages；每次符合条件的 `main` 推送都会从仓库内的假夹具重新生成。评审者可以打开生成的 `BLOCK` 与 `PASS` HTML 报告、查看故意设置为危险的假夹具，并沿用同一套本地测试路径。网页**不**接收仓库、不在远端执行扫描、不访问端点，`PASS` 也绝不是安全认证。
+
+当前危险夹具基线为 AgentLint v0.1.1 / schema 1.1：`BLOCK`，5 errors、6 warnings、0 info。
+
+如需在本机生成同一份静态包，选择一个尚不存在的输出目录并执行：
+
+```powershell
+python scripts/build_public_site.py --output public-demo
+python -m http.server 8000 --directory public-demo
+```
+
+然后打开 <http://localhost:8000>。构建器会重新扫描 `examples/safe-project` 与 `examples/unsafe-project`，不会发布个人扫描结果；`public-demo` 必须尚不存在，因此不会悄悄覆盖你指定的目录。
+
 它重点解释三件事：
 
 1. `AGENTS.md` / `AGENTS.override.md` 在当前目录实际怎样继承，较近规则怎样改变上层边界；

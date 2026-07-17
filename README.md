@@ -6,6 +6,32 @@
 
 [▶ Watch the 2:53 OpenAI Build Week demo on YouTube](https://youtu.be/WxO-wCy0a8E)
 
+[Open the static judge demo](https://biaobiao2233.github.io/agentlint/)
+
+[View the fake fixture](examples/unsafe-project) · [Machine-readable snapshot](artifacts/unsafe-report.json)
+
+## Public demo: generated evidence, not a hosted scanner
+
+The public demo is a GitHub Pages landing page built from the included fake
+fixtures on every eligible `main` push. It lets a reviewer open the generated
+`BLOCK` and `PASS` HTML reports, inspect the deliberately unsafe fixture, and
+follow the same local test path. It does **not** accept repositories, execute
+scans remotely, contact endpoints, or turn `PASS` into a security guarantee.
+Its current unsafe-fixture baseline is AgentLint v0.1.1 / schema 1.1:
+`BLOCK`, 5 errors, 6 warnings, and 0 info findings.
+
+To build the same static bundle locally, choose a new output directory and run:
+
+```bash
+python scripts/build_public_site.py --output public-demo
+python -m http.server 8000 --directory public-demo
+```
+
+Then visit <http://localhost:8000>. The builder regenerates reports from
+`examples/safe-project` and `examples/unsafe-project`; it does not publish a
+personal scan output. `public-demo` must not already exist, so a build cannot
+silently overwrite a directory you selected.
+
 It answers three practical questions before an agent configuration is installed, shared, or trusted:
 
 1. What instructions are effective at this directory, and which nearer instruction changes an ancestor rule?

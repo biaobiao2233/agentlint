@@ -12,6 +12,7 @@ Official rules checked: <https://openai.devpost.com/rules>. This checklist is op
 - [ ] Record a public YouTube demo under three minutes, with audible English narration, a working product demo, and an explanation of Codex/GPT-5.6 usage.
 - [ ] Confirm no video frame exposes real secrets, private data, or unlicensed copyrighted media.
 - [ ] Use only repository-portable `examples/unsafe-project` artifacts/screenshots for the public demo or submission; do not upload a personal scan output, even though reports now hide the absolute scan root by default.
+- [ ] Verify the public GitHub Pages link opens the portable fake-fixture demo without installation or local files.
 
 ## Devpost fields
 

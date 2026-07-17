@@ -20,6 +20,8 @@ AgentLint is a Codex-native local CLI and Codex plugin for a zero-execution pref
 
 It never starts a discovered MCP server, imports scanned code, runs scanned scripts, contacts endpoints in a scanned repository, or modifies scanned configuration/input files. It creates or overwrites reports only at output paths explicitly requested by the user. Known literal credential patterns are redacted before report serialization, subject to heuristic limits. `PASS` means no current deterministic rule matched; it is not a security certification.
 
+**Live judge demo:** [open the static fake-fixture snapshot](https://biaobiao2233.github.io/agentlint/). It is not a hosted scanner; it links to the generated `BLOCK`/`PASS` reports, fixture source, repository, and video. Its current unsafe-fixture baseline is `BLOCK` with 5 errors and 6 warnings.
+
 ## How it was built
 
 Built during OpenAI Build Week with Codex and GPT-5.6. Codex accelerated implementation iteration, code navigation, test/fixture design, plugin packaging, bilingual offline-report delivery, report verification, and English delivery writing. Human decisions set the product boundaries: local-only scanning, zero execution, explicit redaction, evidence-bound language, and no automatic remediation.
@@ -59,6 +61,8 @@ agentlint scan examples/unsafe-project --fail-on never --html reports/unsafe.htm
 ```
 
 The `safe-project` should PASS. `unsafe-project` is a clearly labeled fake fixture; it should report BLOCK findings and must not be executed. The README also documents plugin and skill validation commands.
+
+The Pages artifact is reproducible with `python scripts/build_public_site.py --output public-demo`; it regenerates both public reports from the repository fixtures and refuses to overwrite an existing output directory.
 
 ## Privacy and limitations
 
