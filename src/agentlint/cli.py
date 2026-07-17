@@ -74,9 +74,9 @@ def _scan_command(args: argparse.Namespace) -> int:
     if not args.quiet:
         render_console(result, color=not args.no_color)
         if args.json_path:
-            print(f"\nJSON report: {Path(args.json_path).resolve()}")
+            print("\nJSON report written to the requested output path.")
         if args.html_path:
-            print(f"HTML report: {Path(args.html_path).resolve()}")
+            print("HTML report written to the requested output path.")
     return _exit_code(result.counts, args.fail_on)
 
 

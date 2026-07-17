@@ -40,14 +40,14 @@ Run AgentLint as a local, zero-execution preflight. Explain which instructions a
    - Keep file excerpts and other evidence in their original language. Do not claim the CLI terminal is fully localized.
    - Unknown rule IDs use the report's fallback display rather than an invented translation.
 5. Link the user to the generated HTML report. State that no scanned code or MCP server was executed.
-   Before the user shares a real report, remind them that it retains the actual scan root and related paths. Recommend the portable `examples/unsafe-project` fixture for public screenshots or demo artifacts.
+   Before the user shares a real report, remind them that reports use a portable `.` root but can still expose relative structure and redacted excerpts. Recommend the portable `examples/unsafe-project` fixture for public screenshots or demo artifacts.
 6. If the user asks for fixes, change one bounded class of findings at a time, preserve unrelated work, rerun AgentLint, and report before/after counts.
 
 ## Interpret results
 
 - `BLOCK`: at least one deterministic error must be resolved before installation or sharing.
-- `REVIEW`: no blocking error, but a human should review authority or policy warnings.
-- `PASS`: no current deterministic rule matched; this is not proof of safety.
+- `REVIEW`: no blocking error, but a human should review authority/policy warnings or a coverage gap.
+- `PASS`: no current deterministic rule or known coverage gap matched; this is not proof of safety.
 
 For rule intent and known limitations, read `references/rule-guide.md`.
 

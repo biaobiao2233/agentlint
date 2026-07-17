@@ -28,6 +28,7 @@ RULES: tuple[RuleSpec, ...] = (
     RuleSpec("POLICY003", "warning", "Destructive action lacks an approval boundary", "policy"),
     RuleSpec("POLICY004", "error", "Instruction requests secret disclosure", "policy"),
     RuleSpec("COVERAGE001", "warning", "Long instruction needs review", "coverage"),
+    RuleSpec("COVERAGE002", "warning", "Scanner coverage is incomplete", "coverage"),
     RuleSpec("AUTH001", "warning", "Skill requests high-risk authority without approval", "authority"),
     RuleSpec("MCP001", "error", "Remote MCP endpoint uses plaintext HTTP", "mcp"),
     RuleSpec("MCP002", "error", "MCP configuration contains an embedded secret", "mcp"),
@@ -165,7 +166,7 @@ def instruction_safety_findings(
                 Location(relative_path, line_number, line_number, _safe_excerpt(raw_line)), confidence="medium", tags=("coverage", source_kind)))
         for line in _clauses(raw_line):
             location = Location(relative_path, line_number, line_number, _safe_excerpt(line))
-            if BYPASS_RE.search(line):
+            if BYPASS_RE.search(line) and classify_modality(line) != "deny":
                 findings.append(
                     Finding(
                         "POLICY002", "error", "Instruction attempts to bypass a higher-priority boundary",

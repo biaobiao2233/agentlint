@@ -75,4 +75,16 @@ agentlint scan <repo>/plugin/plugins/agentlint --fail-on error: exit 0 — PASS,
 
 ## Portable public-artifact scope
 
-Before release, scan `artifacts`, `output`, `devpost`, and the publication documentation for local absolute paths and email addresses. The recorded portable-scope scan exited `0` with no matches. Public repository artifacts and screenshots must be generated from `examples/unsafe-project`; do not publish a personal scan output because real reports intentionally retain their actual scan root and related paths for local evidence.
+Before release, scan `artifacts`, `output`, `devpost`, and the publication documentation for local absolute paths and email addresses. The recorded portable-scope scan exited `0` with no matches. Public repository artifacts and screenshots must be generated from `examples/unsafe-project`; reports now render a portable `.` root, but relative paths and redacted excerpts still make a personal scan unsuitable for publication.
+
+## Security-hardening regression check
+
+Recorded locally on 2026-07-17 after the report-privacy and instruction-discovery hardening:
+
+```text
+py -3.11 -m pytest -p no:cacheprovider -rA: 41 passed, 1 skipped
+agentlint scan examples/safe-project --fail-on error: PASS, exit 0
+agentlint scan examples/unsafe-project --fail-on never: BLOCK, exit 0 by explicit demo policy
+```
+
+The skipped test requires Windows privileges to create an ordinary directory symlink. Windows junction coverage, including a junction ancestor of the scan target, passed in this workspace.

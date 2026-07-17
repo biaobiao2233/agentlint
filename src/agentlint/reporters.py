@@ -28,6 +28,7 @@ ZH_RULES = {
     "POLICY003": ("破坏性操作缺少审批边界", "误解指令可能导致不可恢复的数据删除或历史改写。", "要求明确用户确认并验证具体目标。"),
     "POLICY004": ("指令请求披露秘密信息", "执行后可能经聊天、日志、文件或远程服务泄露凭据。", "移除披露请求，仅引用秘密名称并使用受限秘密存储。"),
     "COVERAGE001": ("过长指令需要复核", "过长的控制文本更难审阅其有效边界和例外。", "拆分为可审阅的范围规则，并记录优先级。"),
+    "COVERAGE002": ("扫描覆盖范围不完整", "至少一处可能影响有效配置的路径没有被完整读取，因此结果不能视为完全覆盖。", "让相关配置可安全读取，移除链接或 reparse point，或调整项目指令的字节上限后重新扫描。"),
     "AUTH001": ("Skill 请求高风险权限但未设审批", "可复用工作流可能在权限更广的项目中执行。", "增加明确审批关口并缩小目标和数据范围。"),
     "MCP001": ("远程 MCP 端点缺少安全传输", "工具定义、参数、结果和凭据可能经不安全链路传输。", "使用 https:// 或 wss://；仅回环开发服务可使用明文。"),
     "MCP002": ("MCP 配置包含内嵌秘密", "配置常被提交、复制、索引并进入模型上下文。", "移至受限环境变量或秘密管理器，并轮换暴露值。"),
@@ -46,12 +47,12 @@ ZH_TEXT = {
     "authority": "02 · 权限", "authority_map": "能力与权限映射", "authority_intro": "下列证据关联路径表示有扫描依据的关系，而非位置对应；不会调用工具。",
     "evidence_routes": "证据关联的多步路径", "other_edges": "其他证据关联边", "evidence": "03 · 证据", "findings": "发现项",
     "findings_intro": "筛选审计列表，搜索已转义的证据，再展开条目查看影响和限定修复建议。", "all": "全部", "search": "搜索规则、文件或证据",
-    "empty_filter": "没有发现项匹配这些筛选条件。", "clear_filter": "清空搜索或选择“全部”。", "technical": "技术详情", "primary_evidence": "主要证据", "related_evidence": "关联证据", "why": "风险说明。", "fix": "建议修复", "confidence": "置信度", "language": "语言", "audit_totals": "审计汇总", "finding_filters": "发现项筛选", "search_label": "搜索发现项", "notice": "AgentLint 是确定性预检工具，不是安全认证。没有规则匹配并不表示所有行为都安全。", "empty_report_title": "没有确定性发现项", "empty_report_copy": "扫描配置通过当前规则集；这不代表所有行为都安全。", "skipped_files": "跳过的文件", "shown": "条发现项已显示。",
+    "empty_filter": "没有发现项匹配这些筛选条件。", "clear_filter": "清空搜索或选择“全部”。", "technical": "技术详情", "primary_evidence": "主要证据", "related_evidence": "关联证据", "why": "风险说明。", "fix": "建议修复", "confidence": "置信度", "language": "语言", "audit_totals": "审计汇总", "finding_filters": "发现项筛选", "search_label": "搜索发现项", "notice": "AgentLint 是确定性预检工具，不是安全认证。没有规则或已知覆盖缺口匹配，并不表示所有行为都安全。", "empty_report_title": "没有确定性发现项", "empty_report_copy": "扫描配置没有命中当前规则或已知覆盖缺口；这不代表所有行为都安全。", "skipped_files": "跳过的文件", "shown": "条发现项已显示。",
     "coverage": "04 · 覆盖范围", "inventory": "清单", "coverage_intro": "本次扫描包含的配置范围。", "config_files": "配置文件", "agents_files": "AGENTS 文件", "mcp_configs": "MCP 配置",
     "footer": "自包含报告 · 系统字体回退 · 无外部脚本、字体或遥测", "none_graph": "未发现跨组件图关系。", "none_policy": "未识别出可操作的 AGENTS.md 策略语句。",
     "block": "阻断 BLOCK", "review": "复核 REVIEW", "pass": "通过 PASS", "verdict_labels": {"block": "阻断", "review": "复核", "pass": "通过"}, "modalities": {"deny": "禁止", "require": "要求", "configures": "配置", "bundles": "打包", "precedes": "先于"},
-    "tags": {"mcp": "MCP", "policy": "策略", "skill": "技能", "coverage": "覆盖范围", "transport": "传输", "approval": "审批", "plugin": "插件", "documentation": "文档", "secrets": "秘密信息", "supply-chain": "供应链", "least-privilege": "最小权限", "authority": "权限", "prompt-injection": "提示注入", "instruction-precedence": "指令优先级", "destructive-action": "破坏性操作", "agents": "AGENTS 指令", "reference": "引用", "path": "路径", "manifest": "清单", "structure": "结构"},
-    "verdict_block": "请在安装或分享该智能体配置前解决确定性错误。", "verdict_review": "没有阻断错误，但高影响权限边界仍需人工复核。", "verdict_pass": "当前没有确定性规则匹配；投产前仍应复核高影响行为。",
+    "tags": {"mcp": "MCP", "policy": "策略", "skill": "技能", "coverage": "覆盖范围", "discovery": "发现", "byte-limit": "字节上限", "transport": "传输", "approval": "审批", "plugin": "插件", "documentation": "文档", "secrets": "秘密信息", "supply-chain": "供应链", "least-privilege": "最小权限", "authority": "权限", "prompt-injection": "提示注入", "instruction-precedence": "指令优先级", "destructive-action": "破坏性操作", "agents": "AGENTS 指令", "reference": "引用", "path": "路径", "manifest": "清单", "structure": "结构"},
+    "verdict_block": "请在安装或分享该智能体配置前解决确定性错误。", "verdict_review": "没有阻断错误，但高影响权限边界或覆盖缺口仍需人工复核。", "verdict_pass": "当前没有确定性规则或已知覆盖缺口匹配；投产前仍应复核高影响行为。",
 }
 
 
@@ -65,7 +66,7 @@ def render_console(result: ScanResult, *, color: bool = True, stream: TextIO = s
     verdict_style = "error" if result.verdict == "BLOCK" else "warning" if result.verdict == "REVIEW" else "pass"
     print(styled("AGENTLINT", "bold") + "  effective agent policy audit", file=stream)
     print(f"{styled(result.verdict, verdict_style)}  {counts['error']} error(s)  {counts['warning']} warning(s)  {counts['info']} info  · {result.inventory.files_scanned} config file(s)", file=stream)
-    print(f"Target: {result.root}", file=stream)
+    print(f"Target: {_public_root(result)}", file=stream)
     if not result.findings:
         print("\nNo findings. Static checks cannot certify that a project is secure.", file=stream)
         return
@@ -100,7 +101,7 @@ def render_html(result: ScanResult) -> str:
     inventory = getattr(result, "inventory", None)
     findings = list(getattr(result, "findings", []) or [])
     verdict = str(getattr(result, "verdict", "REVIEW"))
-    root = str(getattr(result, "root", "."))
+    root = _public_root(result)
     target_name = Path(root).name or root
     verdict_class = verdict.lower() if verdict.lower() in {"block", "review", "pass"} else "review"
     finding_rows = "".join(_finding_row(finding, index) for index, finding in enumerate(findings, 1))
@@ -238,11 +239,16 @@ def _capability_rows(result: ScanResult) -> str:
 
 
 def _verdict_copy(verdict: str) -> str:
-    return {"BLOCK": "Resolve deterministic errors before installing or sharing this agent configuration.", "REVIEW": "No blocking errors, but the highlighted authority boundaries need human review.", "PASS": "No current deterministic rule matched. Review high-impact behavior before production use."}.get(verdict, "The available audit evidence needs human review.")
+    return {"BLOCK": "Resolve deterministic errors before installing or sharing this agent configuration.", "REVIEW": "No blocking errors, but the highlighted authority boundaries or coverage gaps need human review.", "PASS": "No current deterministic rule or known coverage gap matched. Review high-impact behavior before production use."}.get(verdict, "The available audit evidence needs human review.")
 
 
 def _attr(value: object, name: str) -> int:
     return int(getattr(value, name, 0) or 0)
+
+
+def _public_root(result: ScanResult) -> str:
+    """Use the report-safe root marker, even for compatible result-like inputs."""
+    return str(getattr(result, "public_root", "."))
 
 
 def _e(value: object) -> str:

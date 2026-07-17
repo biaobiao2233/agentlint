@@ -3,11 +3,12 @@ from __future__ import annotations
 import ipaddress
 import re
 import yaml
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
-from urllib.parse import parse_qsl, urlparse
+from urllib.parse import parse_qsl, urlparse, urlsplit
 
-from .discovery import DiscoveredFiles, _is_reparse_point, discover
+from .discovery import DiscoveredFiles, _has_unsafe_path_component, _is_reparse_point, discover
 from .models import Finding, GraphEdge, GraphNode, Inventory, Location, PolicyFact, ScanResult
 from .parsers import (
     find_line,
@@ -31,9 +32,13 @@ from .rules import (
 
 KEBAB_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SEMVER_RE = re.compile(r"^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$")
-SECRET_KEY_RE = re.compile(r"(?i)(?:token|password|passwd|secret|api[_-]?key|authorization)")
+SECRET_KEY_RE = re.compile(
+    r"(?i)(?:token|password|passwd|secret|api[_-]?key|access[_-]?key(?:[_-]?id)?|"
+    r"aws[_-]?(?:secret[_-]?access[_-]?key|access[_-]?key[_-]?id)|session[_-]?token|"
+    r"private[_-]?key|authorization)"
+)
 SECRET_VALUE_RE = re.compile(
-    r"(?i)(?:\bBearer\s+[A-Za-z0-9._~+/=-]{8,}|\bsk-[A-Za-z0-9_-]{8,}|\bghp_[A-Za-z0-9]{8,}|\bxox[baprs]-[A-Za-z0-9-]{8,})"
+    r"(?i)(?:\bBearer\s+[A-Za-z0-9._~+/=-]{8,}|\bsk-[A-Za-z0-9_-]{8,}|\bghp_[A-Za-z0-9]{8,}|\bxox[baprs]-[A-Za-z0-9-]{8,}|\b(?:AKIA|ASIA)[A-Z0-9]{16}\b)"
 )
 ENV_REFERENCE_RE = re.compile(
     r"^(?:\$\{?[A-Za-z_][A-Za-z0-9_]*\}?|%[A-Za-z_][A-Za-z0-9_]*%|env:[A-Za-z_][A-Za-z0-9_]*)$"
@@ -42,16 +47,36 @@ LOOPBACK_HOSTS = {"localhost", "127.0.0.1", "::1", "[::1]"}
 SENSITIVE_ROOT_RE = re.compile(
     r"(?i)^(?:/|/home|/root|~|\$HOME|%USERPROFILE%|[A-Z]:[\\/]|C:\\Users)(?:[\\/].*)?$"
 )
+DEFAULT_PROJECT_DOC_MAX_BYTES = 32_768
+
+
+@dataclass(frozen=True)
+class ProjectInstructionSettings:
+    """The intentionally narrow project-local instruction settings we model."""
+
+    fallback_filenames: tuple[str, ...] = ()
+    max_bytes: int = DEFAULT_PROJECT_DOC_MAX_BYTES
+
+
+@dataclass(frozen=True)
+class InstructionSelection:
+    selected: Path | None
+    ignored: tuple[tuple[Path, str], ...] = ()
 
 
 def scan(root: str | Path, excludes: Iterable[str] = ()) -> ScanResult:
     root_path = Path(root).expanduser().absolute()
     if not root_path.exists() or not root_path.is_dir():
         raise ValueError(f"scan target is not a directory: {root_path}")
-    if root_path.is_symlink() or _is_reparse_point(root_path):
+    if _has_unsafe_path_component(root_path):
         raise ValueError(f"scan target must not be a symlink or reparse point: {root_path}")
 
-    found = discover(root_path, tuple(excludes))
+    settings = _project_instruction_settings(root_path)
+    found = discover(
+        root_path,
+        tuple(excludes),
+        instruction_fallback_filenames=settings.fallback_filenames,
+    )
     result = ScanResult(root=str(root_path))
     result.inventory = Inventory(
         agents_files=len(found.agents),
@@ -62,25 +87,135 @@ def scan(root: str | Path, excludes: Iterable[str] = ()) -> ScanResult:
         skipped_files=found.skipped,
     )
 
-    _inspect_agents(result, found)
+    selections = _select_instruction_sources(found, settings)
+    _record_discovery_coverage_gaps(result, found)
+    _inspect_agents(result, found, selections)
     _inspect_skills(result, found)
     _inspect_plugins(result, found)
     _inspect_mcp(result, found)
     _inspect_documentation(result, found)
 
     result.findings.extend(policy_conflict_findings(result.policy_facts))
-    _build_instruction_chains(result, found)
+    _build_instruction_chains(result, found, selections, settings)
     _build_cross_component_graph(result, found)
     return result.finalize()
 
 
-def _inspect_agents(result: ScanResult, found: DiscoveredFiles) -> None:
-    selected: dict[Path, Path] = {}
-    for path in found.agents:
-        current = selected.get(path.parent)
-        if current is None or path.name == "AGENTS.override.md":
-            selected[path.parent] = path
+def _project_instruction_settings(root: Path) -> ProjectInstructionSettings:
+    """Read only root-local project controls; global Codex config is out of scope."""
 
+    config_dir = root / ".codex"
+    config_path = config_dir / "config.toml"
+    if (
+        not config_dir.exists()
+        or config_dir.is_symlink()
+        or _is_reparse_point(config_dir)
+        or not config_path.exists()
+        or config_path.is_symlink()
+        or _is_reparse_point(config_path)
+    ):
+        return ProjectInstructionSettings()
+    data, issue = parse_toml(config_path)
+    if issue or not isinstance(data, dict):
+        return ProjectInstructionSettings()
+
+    raw_fallbacks = data.get("project_doc_fallback_filenames", [])
+    fallbacks: list[str] = []
+    seen = {"AGENTS.override.md", "AGENTS.md"}
+    if isinstance(raw_fallbacks, list):
+        for value in raw_fallbacks:
+            value = value.strip() if isinstance(value, str) else value
+            if (
+                not isinstance(value, str)
+                or not value
+                or value in seen
+                or any(separator in value for separator in ("/", "\\"))
+                or value in {".", ".."}
+            ):
+                continue
+            seen.add(value)
+            fallbacks.append(value)
+
+    max_bytes = data.get("project_doc_max_bytes", DEFAULT_PROJECT_DOC_MAX_BYTES)
+    if not isinstance(max_bytes, int) or isinstance(max_bytes, bool) or max_bytes < 0:
+        max_bytes = DEFAULT_PROJECT_DOC_MAX_BYTES
+    return ProjectInstructionSettings(tuple(fallbacks), max_bytes)
+
+
+def _select_instruction_sources(
+    found: DiscoveredFiles,
+    settings: ProjectInstructionSettings,
+) -> dict[Path, InstructionSelection]:
+    priority = {
+        "AGENTS.override.md": 0,
+        "AGENTS.md": 1,
+        **{name: index + 2 for index, name in enumerate(settings.fallback_filenames)},
+    }
+    candidates: dict[Path, list[Path]] = {}
+    for path in found.agents:
+        candidates.setdefault(path.parent, []).append(path)
+
+    selections: dict[Path, InstructionSelection] = {}
+    for directory, paths in candidates.items():
+        selected: Path | None = None
+        ignored: list[tuple[Path, str]] = []
+        for path in sorted(paths, key=lambda item: (priority.get(item.name, len(priority)), item.name.lower())):
+            try:
+                empty = path.stat().st_size == 0
+            except OSError:
+                # Discovery previously established this as a regular candidate.
+                # If it disappears between passes, preserve that uncertainty in
+                # the machine report instead of silently promoting a fallback.
+                if selected is None:
+                    selected = path
+                else:
+                    ignored.append((path, "shadowed"))
+                continue
+            if empty:
+                ignored.append((path, "empty"))
+            elif selected is None:
+                selected = path
+            else:
+                ignored.append((path, "shadowed"))
+        selections[directory] = InstructionSelection(selected, tuple(ignored))
+    return selections
+
+
+def _record_discovery_coverage_gaps(result: ScanResult, found: DiscoveredFiles) -> None:
+    for skipped in found.coverage_gaps:
+        relative = _lexical_relative(found.root, skipped.path)
+        if skipped.is_directory:
+            message = (
+                f"Directory `{relative}` was skipped because it is a {skipped.reason}; "
+                "supported configuration beneath it was not inspected."
+            )
+        else:
+            message = f"Supported configuration file `{relative}` was skipped because it is {skipped.reason}."
+        result.findings.append(
+            Finding(
+                "COVERAGE002",
+                "warning",
+                "Scanner coverage is incomplete",
+                message,
+                "A PASS verdict would incorrectly imply that every relevant instruction and capability source was inspected.",
+                "Replace the link/reparse point with a regular in-project path, or make the configuration safely readable and within the scan limit.",
+                Location(relative, 1, 1, ""),
+                confidence="high",
+                tags=("coverage", "discovery"),
+            )
+        )
+
+
+def _inspect_agents(
+    result: ScanResult,
+    found: DiscoveredFiles,
+    selections: dict[Path, InstructionSelection],
+) -> None:
+    selected = {
+        directory: selection.selected
+        for directory, selection in selections.items()
+        if selection.selected is not None
+    }
     for directory, path in sorted(selected.items(), key=lambda item: item[1].as_posix().lower()):
         relative = result.relative_path(path)
         text = _read_or_record(result, path, relative)
@@ -191,8 +326,10 @@ def _inspect_skills(result: ScanResult, found: DiscoveredFiles) -> None:
             )
 
         # Frontmatter is discovery metadata, not an executable authority
-        # request.  Only the selected skill body contributes capability facts.
-        authority_text = parsed.body if not parsed.issue else ""
+        # request. If the fenced header is malformed we still inspect the
+        # separately identified body: a metadata error must not hide a risky
+        # skill instruction. With no closing fence there is no safe body split.
+        authority_text = parsed.body if parsed.body_start_line > 1 else ""
         result.findings.extend(
             instruction_safety_findings(authority_text, relative_path=relative, source_kind="skill")
         )
@@ -481,18 +618,23 @@ def _build_cross_component_graph(result: ScanResult, found: DiscoveredFiles) -> 
     skills = [node for node in result.nodes if node.kind == "skill"]
     mcp_configs = [node for node in result.nodes if node.kind == "mcp-config"]
     for plugin in plugins:
-        plugin_root = Path(plugin.path).parent.parent.as_posix()
+        plugin_root = Path(plugin.path).parent.parent
         manifest_path = found.root / plugin.path
         manifest, issue = parse_json(manifest_path)
         if issue or not isinstance(manifest, dict):
             continue
         skills_ref = manifest.get("skills")
         mcp_ref = manifest.get("mcpServers")
-        skills_path = f"{plugin_root}/skills/"
-        mcp_path = f"{plugin_root}/.mcp.json"
+        skills_path = plugin_root / "skills"
+        mcp_path = (plugin_root / ".mcp.json").as_posix()
         for skill in skills:
-            if skills_ref in {"./skills", "./skills/", "skills", "skills/"} and skill.path.startswith(skills_path):
-                result.edges.append(GraphEdge(plugin.node_id, skill.node_id, "bundles"))
+            if skills_ref not in {"./skills", "./skills/", "skills", "skills/"}:
+                continue
+            try:
+                if Path(skill.path).is_relative_to(skills_path):
+                    result.edges.append(GraphEdge(plugin.node_id, skill.node_id, "bundles"))
+            except ValueError:
+                continue
         for config in mcp_configs:
             if isinstance(mcp_ref, str) and mcp_ref in {"./.mcp.json", ".mcp.json"} and config.path == mcp_path:
                 result.edges.append(GraphEdge(plugin.node_id, config.node_id, "bundles"))
@@ -511,45 +653,123 @@ def _build_cross_component_graph(result: ScanResult, found: DiscoveredFiles) -> 
                 continue
 
 
-def _build_instruction_chains(result: ScanResult, found: DiscoveredFiles) -> None:
+def _build_instruction_chains(
+    result: ScanResult,
+    found: DiscoveredFiles,
+    selections: dict[Path, InstructionSelection],
+    settings: ProjectInstructionSettings,
+) -> None:
     """Expose the per-directory chain Codex would load, without guessing text semantics.
 
-    At each directory Codex chooses override first, then AGENTS.  For every
-    discovered instruction scope we report that selected root-to-scope chain
-    and the last deterministic fact for each known action.  A consumer can
-    therefore see both the competing locations and the mechanically effective
-    rule, while POLICY001 handles contradictions separately.
+    At each directory Codex chooses the first non-empty override, AGENTS, or
+    configured fallback.  The report keeps skipped candidates visible, models
+    the root project's documented byte limit, and deliberately does not infer
+    any global Codex settings.
     """
-    selected: dict[Path, Path] = {}
-    for path in found.agents:
-        previous = selected.get(path.parent)
-        if previous is None or path.name == "AGENTS.override.md":
-            selected[path.parent] = path
-    for scope_dir in sorted(selected, key=lambda item: _scope_relative(found.root, item).lower()):
+    reported_caps: set[str] = set()
+    for scope_dir in sorted(selections, key=lambda item: _scope_relative(found.root, item).lower()):
         chain: list[Path] = []
-        for directory, source in selected.items():
+        ignored: list[dict[str, str]] = []
+        for directory, selection in selections.items():
             try:
                 directory.relative_to(found.root)
                 scope_dir.relative_to(directory)
             except ValueError:
                 continue
-            chain.append(source)
+            if selection.selected is not None:
+                chain.append(selection.selected)
+            ignored.extend(
+                {
+                    "path": _lexical_relative(found.root, path),
+                    "reason": reason,
+                }
+                for path, reason in selection.ignored
+            )
         chain.sort(key=lambda source: (len(source.parent.relative_to(found.root).parts), source.as_posix().lower()))
-        chain_paths = [result.relative_path(source) for source in chain]
+        chain_paths = [_lexical_relative(found.root, source) for source in chain]
         scope = _scope_relative(found.root, scope_dir)
+        loaded_paths: list[str] = []
+        truncated_sources: list[dict[str, int | str]] = []
+        remaining = settings.max_bytes
+        cap_reached = False
+        for source in chain:
+            source_path = _lexical_relative(found.root, source)
+            try:
+                size = source.stat().st_size
+            except OSError:
+                size = 0
+            included = 0 if cap_reached else min(size, remaining)
+            if not cap_reached and size <= remaining:
+                loaded_paths.append(source_path)
+                remaining -= size
+                continue
+            cap_reached = True
+            truncated_sources.append(
+                {
+                    "path": source_path,
+                    "included_bytes": included,
+                    "total_bytes": size,
+                }
+            )
+            if source_path not in reported_caps:
+                _record_instruction_cap_coverage(result, source_path, settings.max_bytes, included, size)
+                reported_caps.add(source_path)
         effective: dict[str, PolicyFact] = {}
         for fact in result.policy_facts:
             if fact.source_kind != "agents":
                 continue
-            if fact.location.path in chain_paths:
+            if fact.location.path in loaded_paths:
                 effective[fact.action] = fact
         result.instruction_chains.append(
             {
                 "scope": scope,
                 "sources": chain_paths,
+                "loaded_sources": loaded_paths,
+                "ignored_sources": ignored,
+                "truncated_sources": truncated_sources,
+                "project_settings": {
+                    "source": ".codex/config.toml",
+                    "project_doc_max_bytes": settings.max_bytes,
+                    "project_doc_fallback_filenames": list(settings.fallback_filenames),
+                    "global_settings_modeled": False,
+                },
                 "effective_rules": [effective[action].to_dict() for action in sorted(effective)],
             }
         )
+
+
+def _record_instruction_cap_coverage(
+    result: ScanResult,
+    relative: str,
+    max_bytes: int,
+    included_bytes: int,
+    total_bytes: int,
+) -> None:
+    result.findings.append(
+        Finding(
+            "COVERAGE002",
+            "warning",
+            "Instruction chain reaches the Codex byte limit",
+            (
+                f"`{relative}` cannot be represented in full within the project "
+                f"`project_doc_max_bytes` limit of {max_bytes} bytes "
+                f"({included_bytes} of {total_bytes} bytes fit)."
+            ),
+            "The scanner cannot safely claim a complete effective instruction policy when Codex may truncate or stop before later guidance.",
+            "Raise the project-local byte limit or split the instructions so every selected source fits before the cap.",
+            Location(relative, 1, 1, ""),
+            confidence="high",
+            tags=("coverage", "instructions", "byte-limit"),
+        )
+    )
+
+
+def _lexical_relative(root: Path, path: Path) -> str:
+    try:
+        value = path.relative_to(root).as_posix()
+        return value or "."
+    except ValueError:
+        return path.as_posix()
 
 
 def _read_or_record(result: ScanResult, path: Path, relative: str) -> str | None:
@@ -687,9 +907,26 @@ def _package_is_pinned(package: str) -> bool:
 
 def _mcp_summary(config: dict[str, Any]) -> str:
     if isinstance(config.get("url"), str):
-        return config["url"]
+        return _safe_mcp_url_summary(config["url"])
     command = config.get("command")
     return f"stdio: {command}" if command else "configured server"
+
+
+def _safe_mcp_url_summary(value: str) -> str:
+    """Keep graph metadata useful without preserving URL credentials or tokens."""
+
+    try:
+        parsed = urlsplit(value)
+        if not parsed.scheme or not parsed.hostname:
+            return "configured URL"
+        host = parsed.hostname
+        if ":" in host and not host.startswith("["):
+            host = f"[{host}]"
+        port = parsed.port
+        authority = f"{host}:{port}" if port is not None else host
+        return f"{parsed.scheme.lower()}://{authority}{parsed.path}"
+    except (TypeError, ValueError):
+        return "configured URL"
 
 
 def _scope_relative(root: Path, directory: Path) -> str:

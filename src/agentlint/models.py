@@ -70,6 +70,7 @@ class PolicyFact:
     depth: int
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "scope", redact_text(self.scope))
         object.__setattr__(self, "phrase", redact_text(self.phrase))
 
     def to_dict(self) -> dict[str, Any]:
@@ -86,8 +87,13 @@ class GraphNode:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "node_id", redact_text(self.node_id))
+        object.__setattr__(self, "kind", redact_text(self.kind))
         object.__setattr__(self, "label", redact_text(self.label))
-        object.__setattr__(self, "detail", redact_text(self.detail))
+        object.__setattr__(self, "path", redact_text(self.path))
+        if self.kind == "mcp-server":
+            object.__setattr__(self, "detail", redact_text(_safe_mcp_url_detail(self.detail)))
+        else:
+            object.__setattr__(self, "detail", redact_text(self.detail))
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -133,7 +139,7 @@ class ScanResult:
     inventory: Inventory = field(default_factory=Inventory)
     instruction_chains: list[dict[str, Any]] = field(default_factory=list)
     schema_version: str = "1.1"
-    tool_version: str = "0.1.0"
+    tool_version: str = "0.1.1"
 
     def finalize(self) -> "ScanResult":
         self.root = redact_text(self.root)
@@ -152,6 +158,11 @@ class ScanResult:
         self.edges.sort(key=lambda item: (item.source, item.target, item.relation))
         self.instruction_chains.sort(key=lambda item: str(item.get("scope", "")).lower())
         return self
+
+    @property
+    def public_root(self) -> str:
+        """Return a portable marker for report output without exposing the scan host."""
+        return "."
 
     @property
     def counts(self) -> dict[str, int]:
@@ -180,7 +191,7 @@ class ScanResult:
         return {
             "schema_version": self.schema_version,
             "tool_version": self.tool_version,
-            "root": self.root,
+            "root": self.public_root,
             "verdict": self.verdict,
             "counts": self.counts,
             "inventory": self.inventory.to_dict(),
@@ -201,7 +212,7 @@ def _redact_excerpt(value: str) -> str:
 
 
 def redact_text(value: str) -> str:
-    """Deterministically remove credential values before they enter a report model."""
+    """Remove credentials and terminal control characters from report-model text."""
     import re
     from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -214,24 +225,55 @@ def redact_text(value: str) -> str:
                 netloc += f":{parsed.port}"
             if parsed.username is not None:
                 netloc = "[REDACTED]@" + netloc
-            pairs = [
-                (key, "[REDACTED]" if re.search(r"(?i)(token|secret|key|password|auth|credential|令牌|密钥|密码|口令|凭据)", key) else item)
-                for key, item in parse_qsl(parsed.query, keep_blank_values=True)
-            ]
+            # Query values frequently carry signed URLs, opaque session data,
+            # or provider-specific credentials whose key names are not known to
+            # this linter.  Keep only the key names for diagnostics.
+            pairs = [(key, "[REDACTED]") for key, _ in parse_qsl(parsed.query, keep_blank_values=True)]
             return urlunsplit((parsed.scheme, netloc, parsed.path, urlencode(pairs), parsed.fragment))
         except (ValueError, TypeError):
             # A malformed port must not turn a redaction failure into a leak.
             return "[REDACTED-URI]"
 
+    # Keep normal line and tab formatting, but render the remaining C0 controls
+    # visibly so untrusted source text cannot alter terminal output.
+    value = re.sub(
+        r"[\x00-\x08\x0b-\x1f\x7f]",
+        lambda match: f"\\x{ord(match.group(0)):02x}",
+        value,
+    )
     value = re.sub(r"(?i)\b[a-z][a-z0-9+.-]*://[^\s'\"<>]+", redact_url, value)
     value = re.sub(r"(?i)(bearer\s+)[A-Za-z0-9._~+/=-]{6,}", r"\1[REDACTED]", value)
     value = re.sub(r"\b(?:sk|ghp|github_pat|xox[baprs])[-_][A-Za-z0-9_-]{8,}\b", "[REDACTED]", value)
+    value = re.sub(r"\b(?:AKIA|ASIA)[A-Z0-9]{16}\b", "[REDACTED]", value)
     value = re.sub(
-        r"(?i)([\"']?(?:api[ _-]?key|token|secret|password|authorization|credential|access[ _-]?token|令牌|访问令牌|密钥|api\s*密钥|密码|口令|凭据)[\"']?\s*[:=：]\s*[\"']?)[^\s\"',。；;，}\]]+",
+        r"(?i)([\"']?(?:api[ _-]?key|access[ _-]?key(?:[ _-]?id)?|aws[ _-]?(?:secret[ _-]?access[ _-]?key|access[ _-]?key[ _-]?id)|token|session[ _-]?token|secret|password|authorization|credential|private[ _-]?key|access[ _-]?token|令牌|访问令牌|密钥|api\s*密钥|密码|口令|凭据)[\"']?\s*[:=：]\s*[\"']?)[^\s\"',。；;，}\]]+",
         r"\1[REDACTED]",
         value,
     )
     return value
+
+
+def _safe_mcp_url_detail(value: str) -> str:
+    """Display an MCP endpoint without its userinfo, query, or fragment."""
+    from urllib.parse import urlsplit, urlunsplit
+
+    try:
+        parsed = urlsplit(value)
+        if not parsed.scheme or not parsed.netloc:
+            return value
+        host = parsed.hostname
+        if not host:
+            return "[REDACTED-URI]"
+        port = parsed.port
+    except (TypeError, ValueError):
+        return "[REDACTED-URI]"
+
+    # urlsplit() removes IPv6 brackets from hostname; restore them for a valid
+    # human-readable authority while deliberately omitting any userinfo.
+    authority = f"[{host}]" if ":" in host and not host.startswith("[") else host
+    if port is not None:
+        authority += f":{port}"
+    return urlunsplit((parsed.scheme, authority, parsed.path, "", ""))
 
 
 def _sanitize_json(value: Any) -> Any:

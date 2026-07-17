@@ -11,6 +11,11 @@ coverage.xml
 agentlint-report.html
 agentlint-report.json
 
+# Generated scan reports can contain repository structure and evidence. Keep
+# public fixture artifacts under `artifacts/`; do not accidentally commit local scans.
+reports/*.html
+reports/*.json
+
 # Local Build Week video render assets; source files remain versionable.
 video/renders/
 video/node_modules/

@@ -2,7 +2,7 @@
 
 This plugin provides the `audit-agent-config` skill for AgentLint's local, zero-execution preflight. It does not start MCP servers, run scanned scripts, import scanned code, or contact discovered endpoints. It never modifies scanned configuration or input files; report files are created or overwritten only when a user requests a report path.
 
-Reports retain the actual scan root and related paths for local evidence. Review them before sharing; use the repository's portable `examples/unsafe-project` fixture for public screenshots or demo artifacts.
+Reports use `.` for the scan root and retain relative evidence paths. Review them before sharing because relative project structure and redacted excerpts can still be sensitive; use the repository's portable `examples/unsafe-project` fixture for public screenshots or demo artifacts.
 
 ## Installation
 
