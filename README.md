@@ -4,6 +4,8 @@
 
 **AgentLint is a Codex-native, local, zero-execution preflight for the agent configuration that will actually govern a repository.**
 
+[▶ Watch the 2:53 OpenAI Build Week demo on YouTube](https://youtu.be/WxO-wCy0a8E)
+
 It answers three practical questions before an agent configuration is installed, shared, or trusted:
 
 1. What instructions are effective at this directory, and which nearer instruction changes an ancestor rule?
