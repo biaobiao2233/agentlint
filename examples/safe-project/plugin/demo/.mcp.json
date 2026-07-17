@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "workspace-files": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem@1.0.2", "./workspace"],
+      "env": {"ACCESS_TOKEN": "${SAFE_DEMO_TOKEN}"}
+    },
+    "docs": {
+      "url": "https://docs.example.test/mcp"
+    }
+  }
+}

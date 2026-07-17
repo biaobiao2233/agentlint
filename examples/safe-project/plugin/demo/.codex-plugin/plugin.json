@@ -1,0 +1,17 @@
+{
+  "name": "safe-demo",
+  "version": "0.1.0",
+  "description": "A safe AgentLint test plugin.",
+  "author": {"name": "AgentLint sample"},
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Safe demo",
+    "shortDescription": "A minimal safe AgentLint fixture",
+    "longDescription": "A minimal plugin used to test the AgentLint happy path.",
+    "developerName": "AgentLint sample",
+    "category": "Developer Tools",
+    "capabilities": ["Read"],
+    "defaultPrompt": "Summarize this sample workspace."
+  }
+}

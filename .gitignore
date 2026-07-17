@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.playwright-cli/
+.venv/
+dist/
+build/
+coverage.xml
+.coverage
+agentlint-report.html
+agentlint-report.json
+
+# Local Build Week video render assets; source files remain versionable.
+video/renders/
+video/node_modules/
+video/.hyperframes/
+video/assets/*.wav
+video/assets/*.mp4

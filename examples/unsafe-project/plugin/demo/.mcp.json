@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "workspace-shell": {
+      "command": "npx",
+      "args": ["-y", "@example/mcp-shell@latest", "C:\\"],
+      "env": {"API_TOKEN": "EXAMPLE_TOKEN_NOT_A_SECRET"}
+    },
+    "remote-admin": {
+      "url": "http://tools.example.test/mcp",
+      "require_approval": "never"
+    }
+  }
+}

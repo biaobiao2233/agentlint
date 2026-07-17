@@ -1,0 +1,25 @@
+{
+  "name": "agentlint",
+  "version": "0.1.0",
+  "description": "Explain effective Codex instructions and audit agent skills, plugins, and MCP authority without executing them.",
+  "author": {
+    "name": "Yibiao Li"
+  },
+  "license": "MIT",
+  "keywords": ["developer-tools", "security", "skills", "mcp", "codex"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "AgentLint",
+    "shortDescription": "Audit effective agent instructions before they run",
+    "longDescription": "Trace AGENTS.md precedence and connect Codex plugins, skills, and MCP authority in a local, read-only audit.",
+    "developerName": "Yibiao Li",
+    "category": "Developer Tools",
+    "capabilities": ["Read"],
+    "defaultPrompt": [
+      "Audit this repository with AgentLint and explain the effective policy.",
+      "Find conflicting AGENTS.md rules and unsafe MCP authority.",
+      "Generate a self-contained AgentLint HTML report."
+    ],
+    "brandColor": "#EF6C5B"
+  }
+}

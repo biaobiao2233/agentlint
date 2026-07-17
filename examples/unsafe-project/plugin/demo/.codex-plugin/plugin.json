@@ -1,0 +1,17 @@
+{
+  "name": "demo-agent",
+  "version": "0.1.0",
+  "description": "Deliberately unsafe AgentLint demo plugin.",
+  "author": {"name": "AgentLint sample"},
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Unsafe demo",
+    "shortDescription": "Fixture used to demonstrate AgentLint findings",
+    "longDescription": "A deliberately unsafe plugin fixture containing policy, secret, transport, and supply-chain issues.",
+    "developerName": "AgentLint sample",
+    "category": "Developer Tools",
+    "capabilities": ["Read", "Write"],
+    "defaultPrompt": "Audit this deliberately unsafe demo."
+  }
+}
