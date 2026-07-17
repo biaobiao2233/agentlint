@@ -16,6 +16,7 @@ def test_public_site_builds_portable_fake_fixture_reports(public_site) -> None:
     unsafe = json.loads((public_site / "reports" / "unsafe-report.json").read_text(encoding="utf-8"))
     safe = json.loads((public_site / "reports" / "safe-report.json").read_text(encoding="utf-8"))
     manifest = json.loads((public_site / "data" / "fixture-manifest.json").read_text(encoding="utf-8"))
+    unsafe_html = (public_site / "reports" / "unsafe-report.html").read_text(encoding="utf-8")
 
     assert (public_site / "index.html").is_file()
     assert (public_site / "reports" / "unsafe-report.html").is_file()
@@ -26,6 +27,8 @@ def test_public_site_builds_portable_fake_fixture_reports(public_site) -> None:
     assert unsafe["root"] == "."
     assert unsafe["verdict"] == "BLOCK"
     assert unsafe["counts"] == {"error": 5, "warning": 6, "info": 0}
+    assert "localStorage.getItem('agentlint-report-language') || 'en'" in unsafe_html
+    assert "navigator.language" not in unsafe_html
     assert safe["root"] == "."
     assert safe["verdict"] == "PASS"
     assert safe["counts"] == {"error": 0, "warning": 0, "info": 0}

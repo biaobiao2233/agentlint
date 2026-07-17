@@ -85,7 +85,7 @@ agentlint scan examples/unsafe-project --json reports/unsafe.json --html reports
 Start-Process reports/unsafe.html
 ```
 
-同一份自包含 HTML 报告支持双语浏览。关闭 JavaScript 时默认英文；开启 JavaScript 后，如果浏览器 `navigator.language` 为中文且没有保存过偏好，界面会自动选择简体中文。也可以在页面中使用 **中文 / EN** 手动切换，选择会保存到 `localStorage`。
+同一份自包含 HTML 报告支持双语浏览，并且无论是否开启 JavaScript，首次打开都默认英文。也可以在页面中使用 **中文 / EN** 手动切换，选择会保存到 `localStorage`，供后续打开时沿用。
 
 刊头、Verdict/说明、统计、Effective Instruction Graph、Capability-to-Authority Map、Findings 的筛选/空态/字段、Coverage/Inventory，以及当前已翻译的规则标题、风险与修复建议会跟随界面语言。为保证可追溯性，原始技术证据仍保持原文：未覆盖翻译的技术消息、相对路径、行号、摘录、rule/action/node ID 和扫描到的源文本不会被改写；未知 rule ID 使用诚实的后备显示。
 
@@ -140,7 +140,7 @@ AgentLint 本地运行，不调用 API，也不会把扫描配置发送到服务
 
 **为什么没有扫描链接目录？** 为避免扫描跳出目标目录，嵌套 symlink/junction/reparse point 不会被跟随，并会记录 coverage gap。
 
-**中文规则能否被检查和浏览？** 自动测试覆盖中文无空格分句和中文字面量秘密脱敏；HTML 也支持自动或手动切换简体中文。原始技术证据仍保留原文，未知规则使用后备显示。
+**中文规则能否被检查和浏览？** 自动测试覆盖中文无空格分句和中文字面量秘密脱敏；HTML 默认英文，也支持通过 **中文 / EN** 手动切换简体中文。原始技术证据仍保留原文，未知规则使用后备显示。
 
 ## 下一步
 

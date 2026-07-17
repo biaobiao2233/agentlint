@@ -60,7 +60,7 @@ The Windows automated suite covers a junction used as the scan root, a nested ch
 
 ## Chinese-language regression scope
 
-The automated suite includes Chinese clause handling without whitespace separators and Chinese literal-secret redaction across report surfaces. UI acceptance separately verified that one self-contained HTML report defaults to English with JavaScript disabled; with JavaScript, Chinese `navigator.language` auto-selects Simplified Chinese when no preference is saved, **中文 / EN** manually switches the interface, and the selection persists in `localStorage`. Original technical messages, paths, line numbers, excerpts, IDs, and unknown-rule fallbacks remain traceable rather than being invented translations.
+The automated suite includes Chinese clause handling without whitespace separators and Chinese literal-secret redaction across report surfaces. UI acceptance separately verifies that one self-contained HTML report defaults to English with or without JavaScript; **中文 / EN** manually switches the interface, and the selection persists in `localStorage`. Original technical messages, paths, line numbers, excerpts, IDs, and unknown-rule fallbacks remain traceable rather than being invented translations.
 
 ## Release-documentation validation
 

@@ -151,6 +151,14 @@ def test_chinese_rule_dictionary_covers_catalog_and_html_contracts() -> None:
     assert "&lt;script&gt;" in page
 
 
+def test_html_defaults_to_english_and_keeps_manual_language_preference_contract() -> None:
+    page = render_html(_result())
+    assert '<html lang="en">' in page
+    assert 'data-language="en" aria-pressed="true"' in page
+    assert "localStorage.getItem('agentlint-report-language') || 'en'" in page
+    assert "navigator.language" not in page
+
+
 def test_chinese_ui_hooks_cover_aria_empty_and_skipped_states() -> None:
     result = _result()
     result.inventory.skipped_files.append("ignored/<script>.md")

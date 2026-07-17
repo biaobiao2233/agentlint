@@ -25,7 +25,7 @@ Chinese example:
 使用 $audit-agent-config 审计这个仓库，并用中文解释有效指令和修复建议。
 ```
 
-The skill explains results in the language used by the request when practical. The self-contained HTML report defaults to English with JavaScript disabled; with JavaScript it can auto-select Simplified Chinese from `navigator.language` or switch through the in-page **中文 / EN** control, saving the choice in `localStorage`. The CLI terminal is still primarily English. Paths, line numbers, excerpts, rule/action/node IDs, scanned source text, and unknown-rule fallbacks stay in their original language for traceability.
+The skill explains results in the language used by the request when practical. The self-contained HTML report defaults to English with or without JavaScript; use the in-page **中文 / EN** control to switch manually, saving the choice in `localStorage`. The CLI terminal is still primarily English. Paths, line numbers, excerpts, rule/action/node IDs, scanned source text, and unknown-rule fallbacks stay in their original language for traceability.
 
 ## Supported platforms
 

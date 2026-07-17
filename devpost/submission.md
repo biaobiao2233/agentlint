@@ -16,7 +16,7 @@ Agent repositories increasingly contain `AGENTS.md`, nested instructions, skills
 
 ## What it does
 
-AgentLint is a Codex-native local CLI and Codex plugin for a zero-execution preflight. It builds an Effective Instruction Graph from normative instruction facts, performs a Codex Plugin Contract Audit, and draws a Capability-to-Authority Map from supported manifest references and parsed configuration. It produces terminal, JSON, and self-contained HTML reports with `BLOCK`, `REVIEW`, or `PASS` verdicts. The same offline HTML report defaults to English without JavaScript and supports automatic or manual Simplified Chinese browsing when JavaScript is available.
+AgentLint is a Codex-native local CLI and Codex plugin for a zero-execution preflight. It builds an Effective Instruction Graph from normative instruction facts, performs a Codex Plugin Contract Audit, and draws a Capability-to-Authority Map from supported manifest references and parsed configuration. It produces terminal, JSON, and self-contained HTML reports with `BLOCK`, `REVIEW`, or `PASS` verdicts. The same offline HTML report defaults to English with or without JavaScript, with a manual Simplified Chinese switch available when JavaScript is enabled.
 
 It never starts a discovered MCP server, imports scanned code, runs scanned scripts, contacts endpoints in a scanned repository, or modifies scanned configuration/input files. It creates or overwrites reports only at output paths explicitly requested by the user. Known literal credential patterns are redacted before report serialization, subject to heuristic limits. `PASS` means no current deterministic rule matched; it is not a security certification.
 
@@ -35,7 +35,7 @@ The hardest design constraint was being useful without becoming an execution pat
 ## Accomplishments
 
 - A working local CLI with JSON and self-contained HTML evidence.
-- A bilingual offline HTML report: English fallback without JavaScript, Simplified Chinese auto-selection/manual switching with JavaScript, and original-language technical evidence.
+- A bilingual offline HTML report: English default with or without JavaScript, manual Simplified Chinese switching with JavaScript, and original-language technical evidence.
 - Explicit effective-instruction chains for Codex guidance.
 - Cross-component mapping from plugins to skills and MCP configuration.
 - An installable Codex plugin with a bounded, zero-execution audit skill.

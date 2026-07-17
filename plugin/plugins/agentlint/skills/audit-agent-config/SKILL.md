@@ -34,8 +34,7 @@ Run AgentLint as a local, zero-execution preflight. Explain which instructions a
    - secret, transport, approval, and supply-chain findings;
    - the smallest bounded remediation for high-confidence findings.
    - Explain the result in the language used by the user's request when practical.
-   - The self-contained HTML report defaults to English without JavaScript.
-   - With JavaScript, it can auto-select Simplified Chinese from `navigator.language`.
+   - The self-contained HTML report defaults to English with or without JavaScript.
    - Use the page's **中文 / EN** control to switch manually; the choice is saved in `localStorage`.
    - Keep file excerpts and other evidence in their original language. Do not claim the CLI terminal is fully localized.
    - Unknown rule IDs use the report's fallback display rather than an invented translation.
