@@ -28,7 +28,7 @@ html {
 }
 
 body {
-  min-width: 280px;
+  min-width: 0;
   margin: 0;
   background: var(--paper);
   color: var(--ink);
@@ -210,10 +210,14 @@ h3 {
 }
 
 h1 {
-  max-width: 10ch;
+  /* A display headline must never break inside a word at high browser zoom. */
+  max-width: 13ch;
   margin: 0.6rem 0 1.25rem;
-  font: 700 clamp(3.05rem, 7.1vw, 6.65rem) / 0.91 var(--serif);
+  font: 700 clamp(2.9rem, 6.7vw, 6.3rem) / 0.98 var(--serif);
   letter-spacing: -0.06em;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
   text-wrap: balance;
 }
 
@@ -772,7 +776,10 @@ h1 {
   }
 
   h1 {
-    font-size: clamp(2.65rem, 14vw, 4.2rem);
+    max-width: none;
+    font-size: clamp(2rem, 12vw, 3rem);
+    line-height: 1;
+    letter-spacing: -0.055em;
   }
 
   .hero-copy {
@@ -806,6 +813,23 @@ h1 {
 
   .button {
     width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .promise-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .promise-strip div,
+  .promise-strip div + div {
+    padding: 0.72rem 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .promise-strip div:last-child {
+    border-bottom: 0;
   }
 }
 
