@@ -17,7 +17,7 @@ fixtures on every eligible `main` push. It lets a reviewer open the generated
 `BLOCK` and `PASS` HTML reports, inspect the deliberately unsafe fixture, and
 follow the same local test path. It does **not** accept repositories, execute
 scans remotely, contact endpoints, or turn `PASS` into a security guarantee.
-Its current unsafe-fixture baseline is AgentLint v0.1.1 / schema 1.1:
+Its current unsafe-fixture baseline is AgentLint v0.1.2 / schema 1.1:
 `BLOCK`, 5 errors, 6 warnings, and 0 info findings.
 
 To build the same static bundle locally, choose a new output directory and run:
@@ -82,11 +82,11 @@ To audit another repository, point the command at that repository's root. The
 AgentLint source checkout intentionally contains an unsafe fake fixture, so
 `agentlint scan .` is expected to BLOCK unless you exclude `examples`.
 
-`--json` is the machine-readable source of truth. `--html` creates a self-contained report that can be opened locally. Use `--exclude DIR` (repeatable) to skip directory names, `--no-color` for plain terminals, and `--quiet` to suppress console findings.
+`--json` is the machine-readable source of truth. `--html` creates a self-contained report that can be opened locally. Use `--exclude DIR` (repeatable) to skip directory names, `--no-color` for plain terminals, and `--quiet` to suppress console findings. If a requested exclusion actually matches a directory, AgentLint records `COVERAGE002` and returns a `REVIEW` verdict instead of silently allowing `PASS`.
 
 The same self-contained HTML report supports bilingual browsing and defaults to English, including on a first visit with JavaScript enabled. Use the in-page **中文 / EN** control to switch manually; that choice is saved in `localStorage` for later visits. Technical evidence—messages not covered by UI translations, relative paths, line numbers, excerpts, rule/action/node IDs, and scanned source text—remains in its original language so the report stays traceable; unknown rule IDs use an honest fallback.
 
-AgentLint never modifies scanned configuration or input files. It writes only the report paths explicitly passed through `--json` and/or `--html`; those selected output files may be created or overwritten. The Codex plugin follows the same boundary when a user requests report files. Portable JSON, HTML, and console output use `.` for the scan root rather than emitting an absolute machine path.
+AgentLint never modifies scanned configuration or input files. It writes only the report paths explicitly passed through `--json` and/or `--html`; those selected output files may be created or overwritten. The Codex plugin follows the same boundary when a user requests report files. Portable JSON, HTML, and console output use `.` for the scan root rather than emitting an absolute machine path. Evidence under standard Windows, macOS, and Linux home directories keeps the broad path shape but replaces the local account segment with `[USER]`.
 
 Reports retain relative evidence paths and redacted excerpts, which can still reveal repository structure. Review any real report before sharing it outside the repository. Generated `reports/*.json` and `reports/*.html` are ignored by default; public screenshots, demos, or committed artifacts should use the portable [`examples/unsafe-project`](examples/unsafe-project) fixture rather than a personal scan output.
 
@@ -98,7 +98,7 @@ Reports retain relative evidence paths and redacted excerpts, which can still re
 | `1` | Findings reached the requested threshold (`error` by default; `warning` is stricter). Reports may still have been written. |
 | `2` | AgentLint could not scan the target or write/read a required path. |
 
-The report verdict is `BLOCK` when it has errors, `REVIEW` when it has warnings only (including a known coverage gap), and `PASS` when no deterministic rule or known coverage gap matched. `PASS` is not proof of safety.
+The report verdict is `BLOCK` when it has errors, `REVIEW` when it has warnings only (including a known coverage gap), and `PASS` when no deterministic rule or known coverage gap matched. `PASS` is not proof of safety. Coverage gaps are warnings, so CI that must stop on them should use `--fail-on warning` rather than the default error threshold.
 
 ## Try the included fixtures
 
@@ -115,9 +115,9 @@ Open `reports/unsafe.html` and inspect the Effective Instruction Graph and Capab
 
 ## Rules and limits
 
-Current deterministic checks cover supported configuration formats, Codex plugin and skill contracts, instruction facts, and selected MCP declarations. For a scan root's `.codex/config.toml`, AgentLint also models `project_doc_fallback_filenames` and `project_doc_max_bytes` when constructing its project instruction chains; it records selected, ignored, loaded, and byte-limited sources. Global Codex settings are deliberately out of scope. The Effective Instruction Graph records normative instruction facts; the Capability-to-Authority Map records evidence-bound edges from supported manifest references and parsed configuration. It does not verify every possible runtime relationship. `agentlint rules --json` exposes the exact catalog.
+Current deterministic checks cover supported configuration formats, Codex plugin and skill contracts, instruction facts, and selected MCP declarations. `SKILL.md` frontmatter is parsed with safe YAML rather than a line-oriented approximation, including valid multiline, list, and nested metadata. Policy extraction recognizes a bounded bilingual action vocabulary, bidirectional action/object proximity, and positive versus explicitly bypassed approval language. The adversarial regression corpus and its remaining limits are documented in [`docs/adversarial-regression.md`](docs/adversarial-regression.md). For a scan root's `.codex/config.toml`, AgentLint also models `project_doc_fallback_filenames` and `project_doc_max_bytes` when constructing its project instruction chains; it records selected, ignored, loaded, and byte-limited sources. Global Codex settings are deliberately out of scope. The Effective Instruction Graph records normative instruction facts; the Capability-to-Authority Map records evidence-bound edges from supported manifest references and parsed configuration. It does not verify every possible runtime relationship. `agentlint rules --json` exposes the exact catalog.
 
-Limits matter: AgentLint does not execute, dynamically interpret, prove intent, verify a server's behavior, discover configuration it cannot read, or replace a code/security review. Known literal credential patterns are redacted before report serialization; URL query values are removed from report text, but redaction remains heuristic and cannot guarantee that every sensitive value is detected. A skipped supported configuration, a skipped link/reparse directory, or a project instruction byte cap becomes `COVERAGE002` and prevents `PASS`. Nested directory symlinks and Windows junction/reparse-point entries are not followed; a scan root that is itself, or is reached through, a symlink or Windows reparse point is rejected with exit code `2`. Plugin and skill component references through a symlink or reparse point are rejected as invalid local targets. Treat findings as evidence for a bounded human decision.
+Limits matter: AgentLint does not execute, dynamically interpret, prove intent, verify a server's behavior, discover configuration it cannot read, or replace a code/security review. Natural-language checks remain deterministic lexical heuristics: paraphrases outside the tested vocabulary can still be missed, and broad verbs can require human review. Known literal credential patterns are redacted before report serialization; URL query values and standard home-directory account segments are removed from report text, but redaction remains heuristic and cannot guarantee that every sensitive value or arbitrary absolute path is detected. A skipped supported configuration, a skipped link/reparse directory, an actually matched user exclusion, or a project instruction byte cap becomes `COVERAGE002` and prevents `PASS`. Nested directory symlinks and Windows junction/reparse-point entries are not followed; a scan root that is itself, or is reached through, a symlink or Windows reparse point is rejected with exit code `2`. Plugin and skill component references through a symlink or reparse point are rejected as invalid local targets. Treat findings as evidence for a bounded human decision.
 
 ## Codex plugin
 

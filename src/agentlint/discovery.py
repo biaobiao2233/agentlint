@@ -62,7 +62,12 @@ def discover(
     if _has_unsafe_path_component(root):
         raise ValueError(f"scan root must not be a symlink or reparse point: {root}")
     found = DiscoveredFiles(root=root)
-    excludes = IGNORED_DIRECTORIES | set(extra_excludes)
+    # Built-in ignores are known, routine noise and intentionally do not
+    # weaken a PASS verdict.  User-requested exclusions are different: once a
+    # matching directory exists in the scanned tree, its contents are unknown
+    # and must be surfaced as a coverage gap.  Subtract built-ins so their
+    # established silent-ignore behavior wins when a name appears in both.
+    explicit_excludes = set(extra_excludes) - IGNORED_DIRECTORIES
     instruction_names = {"AGENTS.md", "AGENTS.override.md", *instruction_fallback_filenames}
 
     for current, dirnames, filenames in os.walk(root, topdown=True, followlinks=False):
@@ -70,7 +75,10 @@ def discover(
         kept_dirs: list[str] = []
         for dirname in sorted(dirnames):
             candidate = current_path / dirname
-            if dirname in excludes:
+            if dirname in IGNORED_DIRECTORIES:
+                continue
+            if dirname in explicit_excludes:
+                _record_skip(found, root, candidate, "user-requested exclusion", is_directory=True)
                 continue
             if candidate.is_symlink() or _is_reparse_point(candidate):
                 _record_skip(found, root, candidate, "symlink/reparse point", is_directory=True)

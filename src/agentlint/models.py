@@ -139,7 +139,7 @@ class ScanResult:
     inventory: Inventory = field(default_factory=Inventory)
     instruction_chains: list[dict[str, Any]] = field(default_factory=list)
     schema_version: str = "1.1"
-    tool_version: str = "0.1.1"
+    tool_version: str = "0.1.2"
 
     def finalize(self) -> "ScanResult":
         self.root = redact_text(self.root)
@@ -242,6 +242,19 @@ def redact_text(value: str) -> str:
         value,
     )
     value = re.sub(r"(?i)\b[a-z][a-z0-9+.-]*://[^\s'\"<>]+", redact_url, value)
+    # Evidence may legitimately need to show that a configuration grants a
+    # broad host path.  Preserve that diagnostic shape while removing the
+    # account name that most often identifies the developer who ran the scan.
+    value = re.sub(
+        r"(?i)\b([A-Z]:[\\/]+(?:Users|Documents and Settings)[\\/]+)([^\\/\s'\"<>:]+)",
+        r"\1[USER]",
+        value,
+    )
+    value = re.sub(
+        r"(?<![A-Za-z0-9_.-])((?:/home|/Users)/)([^/\s'\"<>:]+)",
+        r"\1[USER]",
+        value,
+    )
     value = re.sub(r"(?i)(bearer\s+)[A-Za-z0-9._~+/=-]{6,}", r"\1[REDACTED]", value)
     value = re.sub(r"\b(?:sk|ghp|github_pat|xox[baprs])[-_][A-Za-z0-9_-]{8,}\b", "[REDACTED]", value)
     value = re.sub(r"\b(?:AKIA|ASIA)[A-Z0-9]{16}\b", "[REDACTED]", value)

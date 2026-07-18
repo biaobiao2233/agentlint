@@ -79,12 +79,13 @@ Before release, scan `artifacts`, `output`, `devpost`, and the publication docum
 
 ## Security-hardening regression check
 
-Recorded locally on 2026-07-17 after the report-privacy and instruction-discovery hardening:
+Recorded locally on 2026-07-18 after the adversarial-language, real-YAML, explicit-exclusion, and path-privacy hardening:
 
 ```text
-py -3.11 -m pytest -p no:cacheprovider -rA: 41 passed, 1 skipped
-agentlint scan examples/safe-project --fail-on error: PASS, exit 0
+py -3.11 -m pytest -p no:cacheprovider: 72 passed, 1 skipped
+py -3.11 -m pytest -p no:cacheprovider tests/test_adversarial_rules.py: 18 passed
+agentlint scan examples/safe-project --fail-on warning: PASS, exit 0
 agentlint scan examples/unsafe-project --fail-on never: BLOCK, exit 0 by explicit demo policy
 ```
 
-The skipped test requires Windows privileges to create an ordinary directory symlink. Windows junction coverage, including a junction ancestor of the scan target, passed in this workspace.
+The skipped test requires Windows privileges to create an ordinary directory symlink. Windows junction coverage, including a junction ancestor of the scan target, passed in this workspace. The full suite also verifies that a matched `--exclude` becomes `COVERAGE002`, valid multiline/list/nested Skill YAML is accepted, standard home-directory account names are removed from every report surface, and positive approval language is distinguished from approval bypass language.

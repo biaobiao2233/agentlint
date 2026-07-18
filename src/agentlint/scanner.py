@@ -20,11 +20,11 @@ from .parsers import (
     read_text,
 )
 from .rules import (
-    APPROVE_RE,
     RULES,
     classify_action,
     classify_modality,
     extract_policy_facts,
+    has_approval_boundary,
     instruction_safety_findings,
     policy_conflict_findings,
 )
@@ -343,7 +343,7 @@ def _inspect_skills(result: ScanResult, found: DiscoveredFiles) -> None:
         )
         result.policy_facts.extend(skill_facts)
         for fact in skill_facts:
-            if fact.action in {"credentials.read", "secrets.output", "filesystem.delete", "git.force"} and fact.modality in {"require", "allow"} and not APPROVE_RE.search(fact.phrase):
+            if fact.action in {"credentials.read", "secrets.output", "filesystem.delete", "git.force"} and fact.modality in {"require", "allow"} and not has_approval_boundary(fact.phrase):
                 result.findings.append(
                     Finding(
                         "AUTH001",

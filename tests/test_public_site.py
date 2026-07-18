@@ -4,6 +4,7 @@ import json
 
 import pytest
 
+from agentlint import __version__
 from scripts.build_public_site import SITE_SOURCE, build_public_site
 
 
@@ -32,6 +33,7 @@ def test_public_site_builds_portable_fake_fixture_reports(public_site) -> None:
     assert safe["root"] == "."
     assert safe["verdict"] == "PASS"
     assert safe["counts"] == {"error": 0, "warning": 0, "info": 0}
+    assert manifest["agentlint_version"] == __version__
     assert manifest["kind"] == "generated-static-fake-fixture-snapshot"
     assert manifest["fixtures"]["unsafe-project"]["report_html"] == "reports/unsafe-report.html"
 

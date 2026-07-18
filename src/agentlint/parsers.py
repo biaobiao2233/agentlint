@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from .discovery import MAX_FILE_SIZE
 
 
@@ -63,32 +65,29 @@ def parse_frontmatter(text: str) -> Frontmatter:
     if closing is None:
         return Frontmatter({}, text, 1, ParseIssue("missing closing YAML frontmatter fence", 1))
 
-    values: dict[str, Any] = {}
-    for offset, raw_line in enumerate(lines[1:closing], start=2):
-        stripped = raw_line.strip()
-        if not stripped or stripped.startswith("#"):
-            continue
-        match = re.match(r"^([A-Za-z_][A-Za-z0-9_-]*):\s*(.*)$", stripped)
-        if not match:
-            return Frontmatter(
-                values,
-                "\n".join(lines[closing + 1 :]),
-                closing + 2,
-                ParseIssue("unsupported or malformed frontmatter entry", offset),
-            )
-        key, raw_value = match.groups()
-        value = raw_value.strip()
-        if not value:
-            values[key] = ""
-        elif (value.startswith('"') and value.endswith('"')) or (
-            value.startswith("'") and value.endswith("'")
-        ):
-            values[key] = value[1:-1]
-        elif value.lower() in {"true", "false"}:
-            values[key] = value.lower() == "true"
-        else:
-            values[key] = value
-    return Frontmatter(values, "\n".join(lines[closing + 1 :]), closing + 2)
+    body = "\n".join(lines[closing + 1 :])
+    body_start_line = closing + 2
+    header = "\n".join(lines[1:closing])
+    try:
+        loaded = yaml.safe_load(header)
+    except yaml.YAMLError as exc:
+        mark = getattr(exc, "problem_mark", None)
+        line = int(getattr(mark, "line", 0)) + 2
+        message = getattr(exc, "problem", None) or "invalid YAML frontmatter"
+        return Frontmatter({}, body, body_start_line, ParseIssue(str(message), line))
+
+    if loaded is None:
+        values: dict[str, Any] = {}
+    elif isinstance(loaded, dict):
+        values = loaded
+    else:
+        return Frontmatter(
+            {},
+            body,
+            body_start_line,
+            ParseIssue("YAML frontmatter root must be a mapping", 2),
+        )
+    return Frontmatter(values, body, body_start_line)
 
 
 def line_excerpt(text: str, line: int) -> str:

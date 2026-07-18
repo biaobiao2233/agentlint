@@ -39,13 +39,56 @@ RULES: tuple[RuleSpec, ...] = (
 )
 
 
+_DISCLOSURE_VERB = (
+    r"(?:\b(?:"
+    r"print(?:s|ed|ing)?|output(?:s|ted|ting)?|upload(?:s|ed|ing)?|"
+    r"send(?:s|ing)?|sent|shar(?:e|es|ed|ing)|expos(?:e|es|ed|ing)|"
+    r"cop(?:y|ies|ied|ying)|log(?:s|ged|ging)?|"
+    r"transmit(?:s|ted|ting)?|exfiltrat(?:e|es|ed|ing)|"
+    r"forward(?:s|ed|ing)?|publish(?:es|ed|ing)?|post(?:s|ed|ing)?|"
+    r"leak(?:s|ed|ing)?|export(?:s|ed|ing)?|relay(?:s|ed|ing)?|"
+    r"disclos(?:e|es|ed|ing)"
+    r")\b|输出|上传|发送|分享|暴露|复制|记录|外传|泄露)"
+)
+_SECRET_OBJECT = (
+    r"(?:\b(?:"
+    r"secrets?|credentials?|api[ _-]?keys?|tokens?|passwords?|passphrases?|"
+    r"environment\s+variables?|env(?:ironment)?\s+vars?|process\s+environment"
+    r")\b|(?<![\w.-])\.env\b|密钥|凭据|令牌|密码|口令|环境变量)"
+)
+_DELETE_VERB = (
+    r"(?:\b(?:"
+    r"delet(?:e|es|ed|ing)|eras(?:e|es|ed|ing)|purg(?:e|es|ed|ing)|"
+    r"wip(?:e|es|ed|ing)|destroy(?:s|ed|ing)?|shred(?:s|ded|ding)?|"
+    r"obliterat(?:e|es|ed|ing)|truncat(?:e|es|ed|ing)|"
+    r"remov(?:e|es|ed|ing)|drop(?:s|ped|ping)|clean(?:s|ed|ing)?\s+out"
+    r")\b|删除|移除|清除|销毁)"
+)
+_DESTRUCTIVE_OBJECT = (
+    r"(?:\b(?:"
+    r"repositor(?:y|ies)|repos?|source\s+trees?|working\s+trees?|checkouts?|"
+    r"workspaces?|projects?|director(?:y|ies)|folders?|files?|file\s*systems?|"
+    r"data|records?|databases?|tables?|branches?|history|contents?|"
+    r"artifacts?|backups?|caches?|everything"
+    r")\b|仓库|目录|文件|文件夹|工作区|项目|数据|数据库|记录|历史|缓存)"
+)
+
+
+def _nearby_pattern(left: str, right: str, *, distance: int = 80) -> re.Pattern[str]:
+    """Match either ordering on one clause without crossing sentence punctuation."""
+
+    gap = rf"[^.;；。！？!?\n]{{0,{distance}}}"
+    return re.compile(rf"(?:{left}{gap}{right}|{right}{gap}{left})", re.IGNORECASE)
+
+
+_SECRET_DISCLOSURE_RE = _nearby_pattern(_DISCLOSURE_VERB, _SECRET_OBJECT)
+_DESTRUCTIVE_NEARBY_RE = _nearby_pattern(_DELETE_VERB, _DESTRUCTIVE_OBJECT)
+
+
 ACTION_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     (
         "secrets.output",
-        re.compile(
-            r"(?i)(?:print|output|upload|send|share|expose|copy|log|输出|上传|发送|分享|暴露|复制|记录)"
-            r".{0,80}(?:secret|credential|api[ _-]?key|token|password|passphrase|environment variable|密钥|凭据|令牌|密码|口令|环境变量)"
-        ),
+        _SECRET_DISCLOSURE_RE,
     ),
     (
         "credentials.read",
@@ -61,7 +104,9 @@ ACTION_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     (
         "filesystem.delete",
         re.compile(
-            r"(?i)(?:rm\s+-rf|remove-item\b.{0,30}-recurse|del\s+/[sq]|delete|remove|erase|删除|移除)"
+            rf"(?i)(?:rm\s+-rf|remove-item\b.{{0,30}}-recurse|del\s+/[sq]|"
+            rf"\b(?:delet(?:e|es|ed|ing)|eras(?:e|es|ed|ing)|remov(?:e|es|ed|ing))\b|"
+            rf"{_DESTRUCTIVE_NEARBY_RE.pattern}|删除|移除|清除|销毁)"
         ),
     ),
     ("git.push", re.compile(r"(?i)(?:git\s+push|push\s+(?:the\s+)?commit|推送)")),
@@ -79,20 +124,54 @@ ACTION_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 DENY_RE = re.compile(
     r"(?i)(?:\bnever\b|\bdo\s+not\b|\bdon't\b|\bmust\s+not\b|\bforbid(?:den)?\b|禁止|不得|严禁|不要)"
 )
+_APPROVAL_TERM = r"(?:approval|permission|consent|confirmation|authorization)"
 APPROVE_RE = re.compile(
-    r"(?i)(?:ask(?:\s+the\s+user)?|confirm|approval|permission|consent|询问|确认|批准|同意|许可)"
+    rf"(?ix)(?:"
+    rf"\bask\s+(?:the\s+)?user\b|"
+    rf"\bconfirm\s+with\s+(?:the\s+)?user\b|"
+    rf"\b(?:ask|request|obtain|seek|await|receive|get)\s+(?:for\s+)?"
+    rf"(?:explicit\s+)?(?:user\s+)?{_APPROVAL_TERM}\b|"
+    rf"\b(?:only\s+)?(?:after|once|upon|with|following|pending)\s+"
+    rf"(?:explicit\s+)?(?:user\s+)?{_APPROVAL_TERM}\b|"
+    rf"\bsubject\s+to\s+(?:explicit\s+)?(?:user\s+)?{_APPROVAL_TERM}\b|"
+    rf"\b(?:require|requires|required|need|needs|needed)\s+"
+    rf"(?:explicit\s+)?(?:user\s+)?{_APPROVAL_TERM}\b|"
+    rf"\b(?:explicit\s+)?(?:user\s+)?{_APPROVAL_TERM}\s+"
+    rf"(?:is\s+|must\s+be\s+)?(?:required|needed|obtained|granted)\b|"
+    rf"\b(?:if|when)\s+(?:(?:the\s+)?user\s+)?(?:approves|confirms|consents|authorizes|approved)\b|"
+    rf"询问(?:用户)?|征得(?:用户)?(?:确认|批准|同意|许可)|经(?:用户)?(?:确认|批准|同意|许可)"
+    rf")"
+)
+NEGATED_APPROVAL_RE = re.compile(
+    rf"(?ix)(?:"
+    rf"\bwithout\s+(?:(?:first|explicitly)\s+)?(?:"
+    rf"(?:asking|consulting|confirming\s+with)\s+(?:the\s+)?user|"
+    rf"(?:requesting|obtaining|seeking|awaiting|receiving)\s+(?:explicit\s+)?(?:user\s+)?{_APPROVAL_TERM}|"
+    rf"(?:explicit\s+)?(?:user\s+)?{_APPROVAL_TERM})\b|"
+    rf"\b(?:with\s+)?no\s+(?:explicit\s+)?(?:user\s+)?{_APPROVAL_TERM}\b|"
+    rf"\b(?:disable|disabling|disabled|skip|skipping|skipped|bypass|bypassing|bypassed|"
+    rf"ignore|ignoring|ignored|omit|omitting|omitted|waive|waiving|waived|remove|removing|removed)"
+    rf"\s+(?:the\s+)?(?:user\s+)?{_APPROVAL_TERM}\b|"
+    rf"\b(?:explicit\s+)?(?:user\s+)?{_APPROVAL_TERM}\s+(?:is\s+|was\s+|can\s+be\s+|must\s+be\s+)?"
+    rf"(?:disabled|skipped|bypassed|ignored|omitted|waived|unnecessary|optional|not\s+required|not\s+needed)\b|"
+    rf"\b(?:do\s+not|don't|never|must\s+not)\s+(?:ask\s+(?:the\s+)?user|"
+    rf"(?:request|obtain|seek|await)\s+(?:explicit\s+)?(?:user\s+)?{_APPROVAL_TERM})\b|"
+    rf"无需(?:用户)?(?:确认|批准|同意|许可)|跳过(?:用户)?(?:确认|批准|同意|许可)|"
+    rf"禁用(?:用户)?(?:确认|批准|同意|许可)"
+    rf")"
 )
 REQUIRE_RE = re.compile(
     r"(?i)(?:\bmust\b|\balways\b|\brequired?\b|\bshould\b|\bneed(?:ed)?\b|\brun\b|\bexecute\b|必须|务必|始终|需要|执行|运行)"
 )
 ALLOW_RE = re.compile(r"(?i)(?:\bmay\b|\bcan\b|\ballow(?:ed)?\b|可以|允许)" )
 IMPERATIVE_COMMAND_RE = re.compile(
-    r"(?i)^\s*(?:[-*]\s*)?(?:rm\s+-rf|remove-item\b|del\s+/[sq]|git\s+(?:reset\s+--hard|push\s+--force))"
+    rf"(?i)^\s*(?:[-*]\s*)?(?:rm\s+-rf|remove-item\b|del\s+/[sq]|"
+    rf"git\s+(?:reset\s+--hard|push\s+--force)|{_DISCLOSURE_VERB}|{_DELETE_VERB})"
 )
 
 BYPASS_RE = re.compile(
     r"(?i)(?:"
-    r"ignore|disregard|override|bypass|disable|circumvent|跳过|忽略|绕过|禁用|无视"
+    r"ignore|disregard|override|bypass|disable|skip|circumvent|跳过|忽略|绕过|禁用|无视"
     r").{0,70}(?:"
     r"previous|higher[- ]priority|system|developer|safety|security|approval|permission|"
     r"上级|此前|系统|开发者|安全|审批|许可"
@@ -109,10 +188,16 @@ def classify_action(line: str) -> str | None:
     return None
 
 
+def has_approval_boundary(line: str) -> bool:
+    """Return whether the clause states a positive, non-bypassed approval gate."""
+
+    return bool(APPROVE_RE.search(line) and not NEGATED_APPROVAL_RE.search(line))
+
+
 def classify_modality(line: str) -> str | None:
     if DENY_RE.search(line):
         return "deny"
-    if APPROVE_RE.search(line):
+    if has_approval_boundary(line):
         return "approve-before"
     if REQUIRE_RE.search(line) or IMPERATIVE_COMMAND_RE.search(line):
         return "require"
@@ -123,7 +208,7 @@ def classify_modality(line: str) -> str | None:
 
 def clause_modality(line: str, action: str | None) -> str | None:
     modality = classify_modality(line)
-    if modality is None and action and re.match(r"(?i)^\s*(?:[-*]\s*)?(?:upload|send|share|print|output|copy|delete|remove|rm\b|上传|发送|分享|输出|打印|复制|删除)", line):
+    if modality is None and action and IMPERATIVE_COMMAND_RE.match(line):
         return "require"
     return modality
 
@@ -179,7 +264,7 @@ def instruction_safety_findings(
 
             action = classify_action(line)
             modality = clause_modality(line, action)
-            if action in {"filesystem.delete", "git.force"} and modality in {"require", "allow"} and not APPROVE_RE.search(line):
+            if action in {"filesystem.delete", "git.force"} and modality in {"require", "allow"} and not has_approval_boundary(line):
                 findings.append(
                     Finding(
                         "POLICY003", "warning", "Destructive instruction has no approval boundary",

@@ -39,7 +39,7 @@ Run AgentLint as a local, zero-execution preflight. Explain which instructions a
    - Keep file excerpts and other evidence in their original language. Do not claim the CLI terminal is fully localized.
    - Unknown rule IDs use the report's fallback display rather than an invented translation.
 5. Link the user to the generated HTML report. State that no scanned code or MCP server was executed.
-   Before the user shares a real report, remind them that reports use a portable `.` root but can still expose relative structure and redacted excerpts. Recommend the portable `examples/unsafe-project` fixture for public screenshots or demo artifacts.
+   Before the user shares a real report, remind them that reports use a portable `.` root and mask standard home-directory account names, but can still expose relative structure, arbitrary path literals, and redacted excerpts. Recommend the portable `examples/unsafe-project` fixture for public screenshots or demo artifacts.
 6. If the user asks for fixes, change one bounded class of findings at a time, preserve unrelated work, rerun AgentLint, and report before/after counts.
 
 ## Interpret results

@@ -1,6 +1,6 @@
 {
   "name": "agentlint",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Explain effective Codex instructions and audit agent skills, plugins, and MCP authority without executing them.",
   "author": {
     "name": "Yibiao Li"
